@@ -1,20 +1,19 @@
-import express from 'express'
-import { Client } from 'pg'
+import cors from 'cors'
 import dotenv from 'dotenv'
+import express from 'express'
+import routerAll from './routes/routerAll'
+// import { swaggerRouter } from './swagger/router'
 dotenv.config()
 
 const app = express()
-const port = process.env.PORT || 6001
-const connectionString = process.env.DATABASE_URL
-const client = new Client({ connectionString })
+app.use(cors())
+app.use(express.json())
 
-client
-  .connect()
-  .then(() => {
-    app.listen(port, () => {
-      console.log(`Listening on port ${port}`)
-    })
-  })
-  .catch((error) => {
-    console.error('Error connecting to the database:', error)
-  })
+const port = process.env.PORT || 7001
+
+app.use('/', routerAll)
+// app.use('/api_docs', swaggerRouter)
+
+app.listen(port, () => {
+  console.log(`Server is running on: http://localhost:${port}`)
+})
