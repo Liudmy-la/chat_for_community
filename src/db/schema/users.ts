@@ -6,7 +6,7 @@ export const newUserSchema = pgTable(
   {
     id: uuid('id').defaultRandom().primaryKey(),
     email: varchar('email', { length: 50 }).notNull(),
-    password: varchar('password', { length: 50 }).notNull(),
+    password: varchar('password').notNull(),
     nickname: varchar('nickname', { length: 50 }),
     token: varchar('token'),
     createdAt: varchar('created_at'),
@@ -16,4 +16,4 @@ export const newUserSchema = pgTable(
   })
 )
 
-export type TNewUser = InferModel<typeof newUserSchema>
+export type TNewUser = InferModel<typeof newUserSchema, 'insert'>
