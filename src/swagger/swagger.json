@@ -95,16 +95,12 @@
             "type": "string",
             "example": "password"
           },
-          "confirmPassword": {
-            "type": "string",
-            "example": "password"
-          },
           "nickname": {
             "type": "string",
             "example": "nickname"
           }
         },
-        "required": ["email", "password", "confirmPassword", "nickname"]
+        "required": ["email", "password", "nickname"]
       },
       "LoginRequest": {
         "type": "object",

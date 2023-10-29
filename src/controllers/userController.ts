@@ -7,29 +7,8 @@ import { newUserSchema, TNewUser } from '../db/schema/users'
 
 export const registerUser = async (req: Request, res: Response) => {
   try {
-    const { email, password, confirmPassword, nickname } = req.body
+    const { email, password, nickname } = req.body
     const db = await connect()
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ error: 'Invalid email address' })
-    }
-
-    if (password !== confirmPassword) {
-      return res.status(400).json({ error: 'Passwords do not match' })
-    }
-
-    const minPasswordLength = 6
-    if (password.length < minPasswordLength) {
-      return res
-        .status(400)
-        .json({ error: `Password must be at least ${minPasswordLength} characters long` })
-    }
-
-    const minNicknameLength = 3
-    if (nickname.length < minNicknameLength) {
-      return res.status(400).json({ error: 'Nickname must be at least 3 characters long' })
-    }
 
     const existingUser = await db
       .select()
