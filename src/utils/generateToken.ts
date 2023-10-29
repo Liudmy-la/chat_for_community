@@ -1,9 +1,11 @@
+import dotenv from 'dotenv'
 import jwt from 'jsonwebtoken'
+dotenv.config()
 
-const secretKey = 'your_secret_key'
+const secretKey = `${process.env.SECRET_TOKEN_KEY}`
 
 export function generateToken(data: any): string {
-  const token = jwt.sign(data, secretKey, { expiresIn: '3h' }) // Токен дійсний протягом 1 години (можна змінити за потребою)
+  const token = jwt.sign(data, secretKey, { expiresIn: '3h' })
   return token
 }
 
