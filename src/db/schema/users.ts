@@ -9,13 +9,16 @@ export const newUserSchema = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     email: varchar('email', { length: 50 }).notNull(),
     password: varchar('password').notNull(),
-    nickname: varchar('nickname', { length: 50 }),
+    nickname: varchar('nickname', { length: 50 }).notNull(),
+    first_name: varchar('first_name', { length: 50 }),
+    last_name: varchar('last_name', { length: 50 }),
     token: varchar('token'),
     createdAt: varchar('created_at'),
     avatar: varchar('avatar', { length: 255 }).default(defaultPhoto),
   },
   (table) => ({
     emailIndex: uniqueIndex('emailIdx').on(table.email), ///unique
+    nicknameIndex: uniqueIndex('nicknameIdx').on(table.nickname), ///unique
   })
 )
 

@@ -7,17 +7,27 @@ import { newUserSchema, TNewUser } from '../db/schema/users'
 
 export const registerUser = async (req: Request, res: Response) => {
   try {
-    const { email, password, nickname } = req.body
+    const { email, password, nickname, first_name, last_name } = req.body
     const db = await connect()
 
-    const existingUser = await db
+    const existingUserEmail = await db
       .select()
       .from(newUserSchema)
       .where(eq(newUserSchema.email, email))
       .execute()
 
-    if (existingUser.length > 0) {
-      return res.status(400).json({ error: 'User with email already exists' })
+    const existingUserNickname = await db
+      .select()
+      .from(newUserSchema)
+      .where(eq(newUserSchema.nickname, nickname))
+      .execute()
+
+    if (existingUserEmail.length > 0) {
+      return res.status(400).json({ error: 'User with this email already exists' })
+    }
+
+    if (existingUserNickname.length > 0) {
+      return res.status(400).json({ error: 'User with this nickname already exists' })
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
@@ -27,6 +37,8 @@ export const registerUser = async (req: Request, res: Response) => {
       email,
       password: hashedPassword,
       nickname,
+      first_name,
+      last_name,
       token: generatedToken,
       createdAt: new Date().toISOString(),
     }

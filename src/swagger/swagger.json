@@ -98,10 +98,18 @@
           "nickname": {
             "type": "string",
             "example": "nickname"
+          },
+          "first_name": {
+            "type": "string",
+            "example": "first_name"
+          },
+          "last_name": {
+            "type": "string",
+            "example": "last_name"
           }
         },
-        "required": ["email", "password", "nickname"]
-      },
+        "required": ["email", "password", "nickname", "first_name", "last_name"]
+      },    
       "LoginRequest": {
         "type": "object",
         "properties": {
