@@ -1,73 +1,60 @@
 import bcrypt from 'bcrypt'
-import { Request, Response } from 'express'
+import jwt from 'jsonwebtoken'
 import { eq } from 'drizzle-orm'
+import { Request, Response } from 'express'
 import connect from '../db/dbConnect'
-import { generateToken } from '../utils/generateToken'
-import { newUserSchema, TNewUser } from '../db/schema/users'
+import { newUserSchema } from '../db/schema/users'
 
-export const registerUser = async (req: Request, res: Response) => {
+interface DecodedToken {
+  email: string
+}
+
+export const getAllUsers = async (req: Request, res: Response) => {
   try {
-    const { email, password, nickname, first_name, last_name } = req.body
+    const token = req.header('Authorization')?.replace('Bearer ', '')
+    if (!token) {
+      return res.status(401).json({ error: 'Token is required' })
+    }
+
     const db = await connect()
+    const users = await db.select().from(newUserSchema).execute()
 
-    const existingUserEmail = await db
-      .select()
-      .from(newUserSchema)
-      .where(eq(newUserSchema.email, email))
-      .execute()
+    const formattedUsers = users.map((user) => {
+      const { id, email, nickname, first_name, last_name, avatar } = user
+      return { id, email, nickname, first_name, last_name, avatar }
+    })
 
-    const existingUserNickname = await db
-      .select()
-      .from(newUserSchema)
-      .where(eq(newUserSchema.nickname, nickname))
-      .execute()
-
-    if (existingUserEmail.length > 0) {
-      return res.status(400).json({ error: 'User with this email already exists' })
-    }
-
-    if (existingUserNickname.length > 0) {
-      return res.status(400).json({ error: 'User with this nickname already exists' })
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10)
-    const generatedToken = await generateToken({ email })
-
-    const newUser: TNewUser = {
-      email,
-      password: hashedPassword,
-      nickname,
-      first_name,
-      last_name,
-      token: generatedToken,
-      createdAt: new Date().toISOString(),
-    }
-
-    await db.insert(newUserSchema).values(newUser).execute()
-
-    return res.status(201).json({ token: generatedToken })
+    return res.status(200).json({ users: formattedUsers })
   } catch (error) {
     console.error('Error:', error)
     return res.status(500).send('Internal Server Error')
   }
 }
 
-export const loginUser = async (req: Request, res: Response) => {
+export const deleteUser = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body
+    const token = req.header('Authorization')?.replace('Bearer ', '')
+    if (!token) {
+      return res.status(401).json({ error: 'Token is required' })
+    }
+    const { password } = req.body
+
+    const decoded = jwt.verify(token, `${process.env.SECRET_TOKEN_KEY}`) as DecodedToken
+    const userEmail = decoded.email
+
     const db = await connect()
 
-    const user = await db
+    const users = await db
       .select()
       .from(newUserSchema)
-      .where(eq(newUserSchema.email, email))
+      .where(eq(newUserSchema.email, userEmail))
       .execute()
 
-    if (user.length === 0) {
-      return res.status(400).json({ error: 'User with this email does not exist' })
+    if (users.length === 0) {
+      return res.status(400).json({ error: 'User not found' })
     }
 
-    const storedPassword = user[0].password
+    const storedPassword = users[0].password
 
     const passwordMatch = await bcrypt.compare(password, storedPassword)
 
@@ -75,15 +62,9 @@ export const loginUser = async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid password' })
     }
 
-    const newToken = generateToken({ email })
+    await db.delete(newUserSchema).where(eq(newUserSchema.email, userEmail)).execute()
 
-    await db
-      .update(newUserSchema)
-      .set({ token: newToken })
-      .where(eq(newUserSchema.email, email))
-      .execute()
-
-    return res.status(200).json({ token: newToken })
+    return res.status(200).json({ message: 'User deleted successfully' })
   } catch (error) {
     console.error('Error:', error)
     return res.status(500).send('Internal Server Error')

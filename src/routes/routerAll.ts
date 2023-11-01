@@ -1,10 +1,16 @@
 import express from 'express'
 import { Router } from 'express'
+import * as authController from '../controllers/authController'
 import * as userController from '../controllers/userController'
 
 const router: Router = express.Router()
 
-router.post('/register', userController.registerUser)
-router.post('/login', userController.loginUser)
+//auth
+router.post('/register', authController.registerUser)
+router.post('/login', authController.loginUser)
+
+//user
+router.get('/users', userController.getAllUsers)
+router.delete('/users', userController.deleteUser)
 
 export default router

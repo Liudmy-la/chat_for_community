@@ -9,7 +9,6 @@
       "url": "https://travel-with-pleasure.onrender.com/"
     }
   ],
-  "tags": [{ "name": "Authentication" }],
 
   "paths": {
     "/register": {
@@ -79,6 +78,83 @@
           }
         }
       }
+    },
+    "/users": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get all users",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Authorization Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Delete a user",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Authorization Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User deleted successfully"
+          },
+          "400": {
+            "description": "User not found"
+          },
+          "401": {
+            "description": "Invalid password"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
     }
   },
 
@@ -109,7 +185,7 @@
           }
         },
         "required": ["email", "password", "nickname", "first_name", "last_name"]
-      },    
+      },
       "LoginRequest": {
         "type": "object",
         "properties": {
@@ -132,6 +208,45 @@
             "example": "your-jwt-token"
           }
         }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "id"
+          },
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "nickname": {
+            "type": "string",
+            "example": "nickname"
+          },
+          "first_name": {
+            "type": "string",
+            "example": "first_name"
+          },
+          "last_name": {
+            "type": "string",
+            "example": "last_name"
+          },
+          "avatar": {
+            "type": "string",
+            "example": "avatar"
+          }
+        }
+      },
+      "DeleteUserRequest": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "example": "password"
+          }
+        },
+        "required": ["password"]
       }
     }
   }
