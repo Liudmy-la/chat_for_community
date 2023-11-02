@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt'
-import { Request, Response } from 'express'
 import { eq } from 'drizzle-orm'
+import { Request, Response } from 'express'
 import connect from '../db/dbConnect'
 import { generateToken } from '../utils/generateToken'
 import { newUserSchema, TNewUser } from '../db/schema/users'

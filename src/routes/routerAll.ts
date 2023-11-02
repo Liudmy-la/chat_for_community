@@ -12,5 +12,6 @@ router.post('/login', authController.loginUser)
 //user
 router.get('/users', userController.getAllUsers)
 router.delete('/users', userController.deleteUser)
+router.post('/avatar', userController.setAvatar)
 
 export default router
