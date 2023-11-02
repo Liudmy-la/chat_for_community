@@ -237,6 +237,54 @@
           }
         }
       }
+    },
+    "/find": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Find a user",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Authorization Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Nickname"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User was successfully found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "User not found"
+          },
+          "401": {
+            "description": "Invalid password"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
     }
   },
 
@@ -291,32 +339,11 @@
           }
         }
       },
-      "User": {
+      "Nickname": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "example": "id"
-          },
-          "email": {
-            "type": "string",
-            "example": "user@example.com"
-          },
           "nickname": {
-            "type": "string",
-            "example": "nickname"
-          },
-          "first_name": {
-            "type": "string",
-            "example": "first_name"
-          },
-          "last_name": {
-            "type": "string",
-            "example": "last_name"
-          },
-          "avatar": {
-            "type": "string",
-            "example": "avatar"
+            "type": "string"
           }
         }
       },
