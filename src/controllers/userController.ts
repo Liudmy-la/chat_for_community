@@ -40,6 +40,32 @@ export const getAllUsers = async (req: Request, res: Response) => {
   }
 }
 
+export const getUserProfile = async (req: Request, res: Response) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '')
+    if (!token) {
+      return res.status(401).json({ error: 'Token is required' })
+    }
+
+    const decoded = jwt.verify(token, `${process.env.SECRET_TOKEN_KEY}`) as DecodedToken
+    const userEmail = decoded.email
+
+    const db = await connect()
+    const users = await db
+      .select()
+      .from(newUserSchema)
+      .where(eq(newUserSchema.email, userEmail))
+      .execute()
+
+    const { id, email, nickname, first_name, last_name, avatar } = users[0]
+
+    return res.status(200).json({ id, email, nickname, first_name, last_name, avatar })
+  } catch (error) {
+    console.error('Error:', error)
+    return res.status(500).send('Internal Server Error')
+  }
+}
+
 export const deleteUser = async (req: Request, res: Response) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '')
@@ -114,6 +140,13 @@ export const setAvatar = async (req: Request, res: Response, next: NextFunction)
         return res.status(400).send('No file uploaded.')
       }
 
+      const allowedExtensions = ['.jpg', '.jpeg', '.png']
+      const fileExtension = '.' + (file.originalname.split('.').pop() || '')
+
+      if (!allowedExtensions.includes(fileExtension.toLowerCase())) {
+        return res.status(400).send('Invalid file type. Only JPEG, JPG and PNG images are allowed.')
+      }
+
       if (file.size > 5 * 1024 * 1024) {
         return res.status(400).send('File size exceeds the limit.')
       }
@@ -142,8 +175,7 @@ export const setAvatar = async (req: Request, res: Response, next: NextFunction)
       .where(eq(newUserSchema.email, userEmail))
       .execute()
 
-    const { id, email, nickname, first_name, last_name, avatar } = upratedUser[0]
-    return res.status(200).json({ id, email, nickname, first_name, last_name, avatar })
+    return res.status(200).send('Avatar changed successfully')
   } catch (error) {
     console.error('Error:', error)
     return res.status(500).send('Internal Server Error')

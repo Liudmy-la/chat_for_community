@@ -13,5 +13,6 @@ router.post('/login', authController.loginUser)
 router.get('/users', userController.getAllUsers)
 router.delete('/users', userController.deleteUser)
 router.post('/avatar', userController.setAvatar)
+router.get('/profile', userController.getUserProfile)
 
 export default router
