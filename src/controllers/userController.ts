@@ -1,12 +1,12 @@
 import * as fs from 'fs'
 import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken'
 import { eq } from 'drizzle-orm'
 import cloudinary from 'cloudinary'
 import { Request, Response, NextFunction } from 'express'
 import connect from '../db/dbConnect'
 import upload from '../helper/multerConfig'
 import { newUserSchema } from '../db/schema/users'
+import { authenticateUser } from '../middlewares/authMiddleware'
 
 cloudinary.v2.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -14,170 +14,169 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUD_API_SECRET,
 })
 
-interface DecodedToken {
-  email: string
-}
-
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '')
-    if (!token) {
-      return res.status(401).json({ error: 'Token is required' })
-    }
+    authenticateUser(req, res, async () => {
+      const db = await connect()
+      const users = await db.select().from(newUserSchema).execute()
 
-    const db = await connect()
-    const users = await db.select().from(newUserSchema).execute()
+      const formattedUsers = users.map((user) => {
+        const { id, email, nickname, first_name, last_name, avatar } = user
+        return { id, email, nickname, first_name, last_name, avatar }
+      })
 
-    const formattedUsers = users.map((user) => {
-      const { id, email, nickname, first_name, last_name, avatar } = user
-      return { id, email, nickname, first_name, last_name, avatar }
+      return res.status(200).json({ users: formattedUsers })
     })
-
-    return res.status(200).json({ users: formattedUsers })
   } catch (error) {
     console.error('Error:', error)
-    return res.status(500).send('Internal Server Error')
+    res.status(500).send('Internal Server Error')
   }
 }
 
 export const getUserProfile = async (req: Request, res: Response) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '')
-    if (!token) {
-      return res.status(401).json({ error: 'Token is required' })
-    }
+    authenticateUser(req, res, async () => {
+      const userEmail = req.userEmail
 
-    const decoded = jwt.verify(token, `${process.env.SECRET_TOKEN_KEY}`) as DecodedToken
-    const userEmail = decoded.email
+      if (userEmail === undefined) {
+        return res.status(401).json({ error: 'Invalid or missing user email' })
+      }
 
-    const db = await connect()
-    const users = await db
-      .select()
-      .from(newUserSchema)
-      .where(eq(newUserSchema.email, userEmail))
-      .execute()
+      const db = await connect()
+      const users = await db
+        .select()
+        .from(newUserSchema)
+        .where(eq(newUserSchema.email, userEmail))
+        .execute()
 
-    const { id, email, nickname, first_name, last_name, avatar } = users[0]
-
-    return res.status(200).json({ id, email, nickname, first_name, last_name, avatar })
+      if (users.length === 0) {
+        return res.status(400).json({ error: 'User not found' })
+      } else {
+        const { id, email, nickname, first_name, last_name, avatar } = users[0]
+        return res.status(200).json({ id, email, nickname, first_name, last_name, avatar })
+      }
+    })
   } catch (error) {
     console.error('Error:', error)
-    return res.status(500).send('Internal Server Error')
+    res.status(500).send('Internal Server Error')
   }
 }
 
 export const deleteUser = async (req: Request, res: Response) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '')
-    if (!token) {
-      return res.status(401).json({ error: 'Token is required' })
-    }
     const { password } = req.body
 
-    const decoded = jwt.verify(token, `${process.env.SECRET_TOKEN_KEY}`) as DecodedToken
-    const userEmail = decoded.email
+    authenticateUser(req, res, async () => {
+      const userEmail = req.userEmail
 
-    const db = await connect()
+      if (userEmail === undefined) {
+        return res.status(401).json({ error: 'Invalid or missing user email' })
+      }
 
-    const users = await db
-      .select()
-      .from(newUserSchema)
-      .where(eq(newUserSchema.email, userEmail))
-      .execute()
+      const db = await connect()
 
-    if (users.length === 0) {
-      return res.status(400).json({ error: 'User not found' })
-    }
+      const users = await db
+        .select()
+        .from(newUserSchema)
+        .where(eq(newUserSchema.email, userEmail))
+        .execute()
 
-    const storedPassword = users[0].password
+      if (users.length === 0) {
+        return res.status(400).json({ error: 'User not found' })
+      }
 
-    const passwordMatch = await bcrypt.compare(password, storedPassword)
+      const storedPassword = users[0].password
 
-    if (!passwordMatch) {
-      return res.status(401).json({ error: 'Invalid password' })
-    }
+      const passwordMatch = await bcrypt.compare(password, storedPassword)
 
-    await db.delete(newUserSchema).where(eq(newUserSchema.email, userEmail)).execute()
+      if (!passwordMatch) {
+        return res.status(401).json({ error: 'Invalid password' })
+      }
 
-    return res.status(200).json({ message: 'User deleted successfully' })
+      await db.delete(newUserSchema).where(eq(newUserSchema.email, userEmail)).execute()
+
+      return res.status(200).json({ message: 'User deleted successfully' })
+    })
   } catch (error) {
     console.error('Error:', error)
-    return res.status(500).send('Internal Server Error')
+    res.status(500).send('Internal Server Error')
   }
 }
 
 export const setAvatar = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '')
-    if (!token) {
-      return res.status(401).json({ error: 'Token is required' })
-    }
+    authenticateUser(req, res, async () => {
+      const userEmail = req.userEmail
 
-    const decoded = jwt.verify(token, `${process.env.SECRET_TOKEN_KEY}`) as DecodedToken
-    const userEmail = decoded.email
-
-    const db = await connect()
-
-    const users = await db
-      .select()
-      .from(newUserSchema)
-      .where(eq(newUserSchema.email, userEmail))
-      .execute()
-
-    if (users.length === 0) {
-      return res.status(400).json({ error: 'User not found' })
-    }
-
-    const uploadMiddleware = upload.single('avatar')
-    uploadMiddleware(req, res, async function (err) {
-      if (err) {
-        console.error('Multer Error:', err)
-        return res.status(400).json({ error: err.message })
+      if (userEmail === undefined) {
+        return res.status(401).json({ error: 'Invalid or missing user email' })
       }
 
-      const file: any = req.file
-      if (!file) {
-        return res.status(400).send('No file uploaded.')
+      const db = await connect()
+
+      const users = await db
+        .select()
+        .from(newUserSchema)
+        .where(eq(newUserSchema.email, userEmail))
+        .execute()
+
+      if (users.length === 0) {
+        return res.status(400).json({ error: 'User not found' })
       }
 
-      const allowedExtensions = ['.jpg', '.jpeg', '.png']
-      const fileExtension = '.' + (file.originalname.split('.').pop() || '')
+      const uploadMiddleware = upload.single('avatar')
+      uploadMiddleware(req, res, async function (err) {
+        if (err) {
+          console.error('Multer Error:', err)
+          return res.status(400).json({ error: err.message })
+        }
 
-      if (!allowedExtensions.includes(fileExtension.toLowerCase())) {
-        return res.status(400).send('Invalid file type. Only JPEG, JPG and PNG images are allowed.')
-      }
+        const file: any = req.file
+        if (!file) {
+          return res.status(400).send('No file uploaded.')
+        }
 
-      if (file.size > 5 * 1024 * 1024) {
-        return res.status(400).send('File size exceeds the limit.')
-      }
+        const allowedExtensions = ['.jpg', '.jpeg', '.png']
+        const fileExtension = '.' + (file.originalname.split('.').pop() || '')
 
-      try {
-        const result = await cloudinary.v2.uploader.upload(file.path)
-        fs.unlinkSync(file.path)
+        if (!allowedExtensions.includes(fileExtension.toLowerCase())) {
+          return res
+            .status(400)
+            .send('Invalid file type. Only JPEG, JPG and PNG images are allowed.')
+        }
 
-        const imageUrl: string = result.secure_url
+        if (file.size > 5 * 1024 * 1024) {
+          return res.status(400).send('File size exceeds the limit.')
+        }
 
-        const updatedUser = await db
-          .update(newUserSchema)
-          .set({ avatar: imageUrl })
-          .where(eq(newUserSchema.email, userEmail))
+        try {
+          const result = await cloudinary.v2.uploader.upload(file.path)
+          fs.unlinkSync(file.path)
 
-        return updatedUser
-      } catch (error) {
-        console.error('Cloudinary Error:', error)
-        return res.status(500).send('Error uploading image to Cloudinary.')
-      }
+          const imageUrl: string = result.secure_url
+
+          const updatedUser = await db
+            .update(newUserSchema)
+            .set({ avatar: imageUrl })
+            .where(eq(newUserSchema.email, userEmail))
+
+          return updatedUser
+        } catch (error) {
+          console.error('Cloudinary Error:', error)
+          return res.status(500).send('Error uploading image to Cloudinary.')
+        }
+      })
+
+      const upratedUser = await db
+        .select()
+        .from(newUserSchema)
+        .where(eq(newUserSchema.email, userEmail))
+        .execute()
+
+      return res.status(200).send('Avatar changed successfully')
     })
-
-    const upratedUser = await db
-      .select()
-      .from(newUserSchema)
-      .where(eq(newUserSchema.email, userEmail))
-      .execute()
-
-    return res.status(200).send('Avatar changed successfully')
   } catch (error) {
     console.error('Error:', error)
-    return res.status(500).send('Internal Server Error')
+    res.status(500).send('Internal Server Error')
   }
 }
