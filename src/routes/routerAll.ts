@@ -3,6 +3,7 @@ import { Router } from 'express'
 import * as authController from '../controllers/authController'
 import * as userController from '../controllers/userController'
 import * as messageController from '../controllers/messageController'
+import * as groupChatController from '../controllers/groupChatController'
 
 const router: Router = express.Router()
 
@@ -18,5 +19,10 @@ router.get('/profile', userController.getUserProfile)
 
 //message
 router.get('/find', messageController.findUserByNickname)
+
+//chats
+router.post('/createChat', groupChatController.createGroupChat)
+
+//private chat(need create different table)
 
 export default router

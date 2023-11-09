@@ -285,11 +285,66 @@
           }
         }
       }
+    },
+    "/createChat": {
+      "post": {
+        "tags": ["Chats"],
+        "summary": "Create a new group chat",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Authorization Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGroupChatRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Chat was successfully created"
+          },
+          "400": {
+            "description": "Invalid request data or chat with this name already exists"
+          },
+          "401": {
+            "description": "Unauthorized, invalid or missing token"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
     }
   },
 
   "components": {
     "schemas": {
+      "CreateGroupChatRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Group Chat Name"
+          },
+          "description": {
+            "type": "string",
+            "example": "Description of the group chat"
+          }
+        },
+        "required": ["name", "description"]
+      },
       "RegisterRequest": {
         "type": "object",
         "properties": {

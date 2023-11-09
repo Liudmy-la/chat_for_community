@@ -1,7 +1,7 @@
 import { InferModel } from 'drizzle-orm'
 import { pgTable, varchar, uuid, uniqueIndex } from 'drizzle-orm/pg-core'
 
-const defaultPhoto = 'https://i.ibb.co/nswJBHv/avatar.png'
+const defaultPhoto = 'https://i.ibb.co/tYmqgt9/avatar.png'
 
 export const newUserSchema = pgTable(
   'users',
