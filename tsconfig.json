@@ -16,6 +16,6 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "__tests__/**/*.test.ts"],
   "exclude": ["drizzle-orm"]
 }

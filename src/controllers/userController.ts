@@ -14,22 +14,31 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUD_API_SECRET,
 })
 
+const handleErrors = (error: any, res: Response) => {
+  console.error('Error:', error)
+  res.status(500).send('Internal Server Error')
+}
+
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
-    authenticateUser(req, res, async () => {
+    await authenticateUser(req, res, async () => {
       const db = await connect()
-      const users = await db.select().from(newUserSchema).execute()
 
-      const formattedUsers = users.map((user) => {
-        const { id, email, nickname, first_name, last_name, avatar } = user
-        return { id, email, nickname, first_name, last_name, avatar }
-      })
+      try {
+        const [users] = await Promise.all([db.select().from(newUserSchema).execute()])
 
-      return res.status(200).json({ users: formattedUsers })
+        const formattedUsers = users.map((user) => {
+          const { id, email, nickname, first_name, last_name, avatar } = user
+          return { id, email, nickname, first_name, last_name, avatar }
+        })
+
+        res.status(200).json({ users: formattedUsers })
+      } catch (error) {
+        handleErrors(error, res)
+      }
     })
   } catch (error) {
-    console.error('Error:', error)
-    res.status(500).send('Internal Server Error')
+    handleErrors(error, res)
   }
 }
 
@@ -57,8 +66,7 @@ export const getUserProfile = async (req: Request, res: Response) => {
       }
     })
   } catch (error) {
-    console.error('Error:', error)
-    res.status(500).send('Internal Server Error')
+    handleErrors(error, res)
   }
 }
 
@@ -98,8 +106,7 @@ export const deleteUser = async (req: Request, res: Response) => {
       return res.status(200).json({ message: 'User deleted successfully' })
     })
   } catch (error) {
-    console.error('Error:', error)
-    res.status(500).send('Internal Server Error')
+    handleErrors(error, res)
   }
 }
 
@@ -176,7 +183,6 @@ export const setAvatar = async (req: Request, res: Response, next: NextFunction)
       return res.status(200).send('Avatar changed successfully')
     })
   } catch (error) {
-    console.error('Error:', error)
-    res.status(500).send('Internal Server Error')
+    handleErrors(error, res)
   }
 }
