@@ -1,0 +1,1 @@
+ALTER TABLE "privateChatSchema" ALTER COLUMN "user_id_second" SET DATA TYPE varchar;

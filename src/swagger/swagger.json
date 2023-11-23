@@ -326,11 +326,62 @@
           }
         }
       }
+    },
+    "/createPrivateChat": {
+      "post": {
+        "tags": ["Chats"],
+        "summary": "Create a new private chat",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Authorization Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePrivateChatRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Private Chat successfully created"
+          },
+          "400": {
+            "description": "Invalid request data or chat with this name already exists"
+          },
+          "401": {
+            "description": "Unauthorized, invalid or missing token"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
     }
   },
 
   "components": {
     "schemas": {
+      "CreatePrivateChatRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "id of searching friend"
+          }
+        },
+        "required": ["id"]
+      },
       "CreateGroupChatRequest": {
         "type": "object",
         "properties": {

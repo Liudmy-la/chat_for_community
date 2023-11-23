@@ -1,0 +1,194 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "id": "d3181afa-a6e9-4c00-b3a7-cca0e9eb07ea",
+  "prevId": "9d43f735-982a-4ceb-9430-459a45a994c6",
+  "tables": {
+    "chatSchema": {
+      "name": "chatSchema",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "admin_id": {
+          "name": "admin_id",
+          "type": "varchar[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": []
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "avatar": {
+          "name": "avatar",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'https://i.ibb.co/XD7Hhhs/avatar-Bot.png'"
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_ids": {
+          "name": "user_ids",
+          "type": "varchar[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": []
+        },
+        "message_ids": {
+          "name": "message_ids",
+          "type": "varchar[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": []
+        }
+      },
+      "indexes": {
+        "nameIdx": {
+          "name": "nameIdx",
+          "columns": [
+            "name"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {}
+    },
+    "privateChatSchema": {
+      "name": "privateChatSchema",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id_one": {
+          "name": "user_id_one",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id_second": {
+          "name": "user_id_second",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "message_ids": {
+          "name": "message_ids",
+          "type": "varchar[]",
+          "primaryKey": false,
+          "notNull": false,
+          "default": []
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {}
+    },
+    "users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password": {
+          "name": "password",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nickname": {
+          "name": "nickname",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "first_name": {
+          "name": "first_name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_name": {
+          "name": "last_name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "token": {
+          "name": "token",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avatar": {
+          "name": "avatar",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'https://i.ibb.co/tYmqgt9/avatar.png'"
+        }
+      },
+      "indexes": {
+        "emailIdx": {
+          "name": "emailIdx",
+          "columns": [
+            "email"
+          ],
+          "isUnique": true
+        },
+        "nicknameIdx": {
+          "name": "nicknameIdx",
+          "columns": [
+            "nickname"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  }
+}
