@@ -279,6 +279,47 @@
         }
       }
     },
+    "/myChats": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get all private chats for a user",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Authorization Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User's private chats were successfully retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPrivateChatsResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No private chats found for the user"
+          },
+          "400": {
+            "description": "User not found"
+          },
+          "401": {
+            "description": "Invalid or missing user email or authorization token"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
 
     "/find": {
       "get": {
@@ -414,6 +455,40 @@
 
   "components": {
     "schemas": {
+      "UserPrivateChatsResponse": {
+        "type": "object",
+        "properties": {
+          "userPrivateChats": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "d27f4150-6e97-4c70-a0d2-add24dc6dc9d"
+                },
+                "userIdOne": {
+                  "type": "string",
+                  "example": "cadbe7c7-edcb-4c7d-8dd3-f365b1714c59"
+                },
+                "userIdSecond": {
+                  "type": "string",
+                  "example": "fecf514d-7769-40ec-b2d2-e975eccc2fe0"
+                },
+                "messageIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "example": "string"
+                  }
+                }
+              },
+              "required": ["id", "userIdOne", "userIdSecond", "messageIds"]
+            }
+          }
+        },
+        "required": ["userPrivateChats"]
+      },
       "UserChatsResponse": {
         "type": "object",
         "properties": {

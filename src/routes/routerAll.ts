@@ -18,6 +18,7 @@ router.delete("/users", userController.deleteUser);
 router.post("/avatar", userController.setAvatar);
 router.get("/profile", userController.getUserProfile);
 router.get("/myGroups", userController.getUserAllCroupChats);
+router.get("/myChats", userController.getUserAllPrivateChats);
 
 //message
 router.get("/find", messageController.findUserByNickname);

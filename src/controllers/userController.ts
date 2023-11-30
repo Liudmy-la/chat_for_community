@@ -1,13 +1,13 @@
 import * as fs from "fs";
 import bcrypt from "bcrypt";
-import { eq, sql } from "drizzle-orm";
-
+import { eq } from "drizzle-orm";
 import cloudinary from "cloudinary";
 import { Request, Response, NextFunction } from "express";
 import connect from "../db/dbConnect";
 import upload from "../helper/multerConfig";
 import { newUserSchema } from "../db/schema/users";
 import { chatSchema } from "../db/schema/chats";
+import { privateChatSchema } from "../db/schema/privateChat";
 import { authenticateUser } from "../middlewares/authMiddleware";
 
 cloudinary.v2.config({
@@ -215,6 +215,51 @@ export const getUserAllCroupChats = async (req: Request, res: Response) => {
         } else {
           const userChats = allChats.filter((chat) => chat.userIds?.includes(users[0].id));
           return res.status(200).json({ userChats });
+        }
+      }
+    });
+  } catch (error) {
+    handleErrors(error, res);
+  }
+};
+
+export const getUserAllPrivateChats = async (req: Request, res: Response) => {
+  try {
+    authenticateUser(req, res, async () => {
+      const userEmail = req.userEmail;
+
+      if (userEmail === undefined) {
+        return res.status(401).json({ error: "Invalid or missing user email" });
+      }
+
+      const db = await connect();
+      const users = await db
+        .select()
+        .from(newUserSchema)
+        .where(eq(newUserSchema.email, userEmail))
+        .execute();
+
+      if (users.length === 0) {
+        return res.status(400).json({ error: "User not found" });
+      } else {
+        const userChatsOne = await db
+          .select()
+          .from(privateChatSchema)
+          .where(eq(privateChatSchema.userIdOne, users[0].id))
+          .execute();
+
+        const userChatsSecond = await db
+          .select()
+          .from(privateChatSchema)
+          .where(eq(privateChatSchema.userIdSecond, users[0].id))
+          .execute();
+
+        const userPrivateChats = [...userChatsOne, ...userChatsSecond];
+
+        if (userPrivateChats.length === 0) {
+          return res.status(204).json({ error: "You have no private chats" });
+        } else {
+          return res.status(200).json({ userPrivateChats });
         }
       }
     });
