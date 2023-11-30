@@ -238,6 +238,48 @@
         }
       }
     },
+    "/myGroups": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get all group chats for a user",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Authorization Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User's group chats were successfully retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserChatsResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No chats found for the user"
+          },
+          "400": {
+            "description": "User not found"
+          },
+          "401": {
+            "description": "Invalid or missing user email or authorization token"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+
     "/find": {
       "get": {
         "tags": ["Users"],
@@ -372,6 +414,66 @@
 
   "components": {
     "schemas": {
+      "UserChatsResponse": {
+        "type": "object",
+        "properties": {
+          "userChats": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "string"
+                },
+                "adminId": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "example": "string"
+                  }
+                },
+                "name": {
+                  "type": "string",
+                  "example": "string"
+                },
+                "avatar": {
+                  "type": "string",
+                  "example": "string"
+                },
+                "description": {
+                  "type": "string",
+                  "example": "string"
+                },
+                "userIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "example": "string"
+                  }
+                },
+                "messageIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "example": "string"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "adminId",
+                "name",
+                "avatar",
+                "description",
+                "userIds",
+                "messageIds"
+              ]
+            }
+          }
+        },
+        "required": ["userChats"]
+      },
       "CreatePrivateChatRequest": {
         "type": "object",
         "properties": {
@@ -381,20 +483,6 @@
           }
         },
         "required": ["id"]
-      },
-      "CreateGroupChatRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "example": "Group Chat Name"
-          },
-          "description": {
-            "type": "string",
-            "example": "Description of the group chat"
-          }
-        },
-        "required": ["name", "description"]
       },
       "RegisterRequest": {
         "type": "object",

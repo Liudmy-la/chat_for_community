@@ -17,6 +17,7 @@ router.get("/users", userController.getAllUsers); //without me/////need to add
 router.delete("/users", userController.deleteUser);
 router.post("/avatar", userController.setAvatar);
 router.get("/profile", userController.getUserProfile);
+router.get("/myGroups", userController.getUserAllCroupChats);
 
 //message
 router.get("/find", messageController.findUserByNickname);
@@ -24,7 +25,5 @@ router.get("/find", messageController.findUserByNickname);
 //chats
 router.post("/createChat", groupChatController.createGroupChat);
 router.post("/createPrivateChat", privateChatController.createPrivateChat);
-
-//private chat(need create different table)
 
 export default router;
