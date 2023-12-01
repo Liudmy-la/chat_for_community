@@ -549,12 +549,26 @@
         },
         "required": ["userChats"]
       },
+      "CreateGroupChatRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "string"
+          },
+          "description": {
+            "type": "string",
+            "example": "string"
+          }
+        },
+        "required": ["name", "description"]
+      },
       "CreatePrivateChatRequest": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
-            "example": "id of searching friend"
+            "example": "string"
           }
         },
         "required": ["id"]
