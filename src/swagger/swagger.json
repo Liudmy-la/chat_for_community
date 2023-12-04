@@ -100,10 +100,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/User"
-                  }
+                  "$ref": "#/components/schemas/Users"
                 }
               }
             }
@@ -320,6 +317,40 @@
         }
       }
     },
+    "/allCroups": {
+      "get": {
+        "tags": ["Chats"],
+        "summary": "Get all groups",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Authorization Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserChatsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
 
     "/find": {
       "get": {
@@ -492,7 +523,7 @@
       "UserChatsResponse": {
         "type": "object",
         "properties": {
-          "userChats": {
+          "chats": {
             "type": "array",
             "items": {
               "type": "object",
@@ -639,6 +670,38 @@
           }
         },
         "required": ["password"]
+      },
+      "Users": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string"
+                },
+                "nickname": {
+                  "type": "string"
+                },
+                "first_name": {
+                  "type": "string"
+                },
+                "last_name": {
+                  "type": "string"
+                },
+                "avatar": {
+                  "type": "string"
+                }
+              },
+              "required": ["id", "email", "nickname", "first_name", "last_name", "avatar"]
+            }
+          }
+        }
       },
       "UserProfileResponse": {
         "type": "object",

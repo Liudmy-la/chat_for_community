@@ -44,6 +44,24 @@ export const getAllUsers = async (req: Request, res: Response) => {
   }
 };
 
+export const getAllGroups = async (req: Request, res: Response) => {
+  try {
+    await authenticateUser(req, res, async () => {
+      const db = await connect();
+
+      try {
+        const [chats] = await Promise.all([db.select().from(chatSchema).execute()]);
+
+        res.status(200).json({ chats });
+      } catch (error) {
+        handleErrors(error, res);
+      }
+    });
+  } catch (error) {
+    handleErrors(error, res);
+  }
+};
+
 export const getUserProfile = async (req: Request, res: Response) => {
   try {
     authenticateUser(req, res, async () => {
@@ -214,7 +232,7 @@ export const getUserAllCroupChats = async (req: Request, res: Response) => {
           return res.status(204).json({ error: "You have no chats" });
         } else {
           const userChats = allChats.filter((chat) => chat.userIds?.includes(users[0].id));
-          return res.status(200).json({ userChats });
+          return res.status(200).json({ chats: userChats });
         }
       }
     });

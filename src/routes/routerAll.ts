@@ -13,7 +13,8 @@ router.post("/register", authController.registerUser);
 router.post("/login", authController.loginUser);
 
 //user
-router.get("/users", userController.getAllUsers); //without me/////need to add
+router.get("/users", userController.getAllUsers); 
+router.get("/allCroups", userController.getAllGroups); 
 router.delete("/users", userController.deleteUser);
 router.post("/avatar", userController.setAvatar);
 router.get("/profile", userController.getUserProfile);
