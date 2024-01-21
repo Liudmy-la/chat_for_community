@@ -5,6 +5,7 @@ import * as userController from "../controllers/userController";
 import * as messageController from "../controllers/messageController";
 import * as groupChatController from "../controllers/groupChatController";
 import * as privateChatController from "../controllers/privateChatController";
+import * as connectToController from "../controllers/connectToController";
 
 const router: Router = express.Router();
 
@@ -27,5 +28,8 @@ router.get("/find", messageController.findUserByNickname);
 //chats
 router.post("/createChat", groupChatController.createGroupChat);
 router.post("/createPrivateChat", privateChatController.createPrivateChat);
+
+//current chat 
+router.get('/currentChat', connectToController.listening);
 
 export default router;
