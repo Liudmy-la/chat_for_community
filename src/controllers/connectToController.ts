@@ -1,13 +1,15 @@
 import WebSocket from "ws"; // npm install express ws typescript ts-node nodemon --save  +  npm i --save-dev @types/ws
-import express, { Request, Response } from "express";
+import express from "express";
 import http from "http";
 import path from "path";
 
 const app = express();
 const myServer = http.createServer(app);
-const wsServer = new WebSocket.Server({ noServer: true });
 
-app.use("/", express.static(path.resolve(__dirname, '../../../front/travel-chat/travel-chat/src/pages/client/index.html')))
+const wsServer = new WebSocket.Server({ noServer: true });
+let dynamicPort = 3001; // default value for this app
+
+app.use("/", express.static(path.resolve(__dirname, '../client/index.html')))
 
 interface WebSocketClient {
 	send: (data: WebSocket.Data) => void;
@@ -38,13 +40,14 @@ myServer.on("upgrade", async function upgrade(request, socket, head) {
 }); 
 
 
-export const listening = (req: Request, res: Response) => {
-	const { port } = req.query
-	// const PORT = port
-		
-	const PORT = 3001;
-
+export const handleNewChat = (newChatId: string) => {
+	
+	const PORT = parseInt(newChatId) + 3001;
+	
+	console.log(`PORT for chat ${newChatId}`);
+	
 	myServer.listen(PORT, () => {
-		return res.status(200).json(`Connected online to the chat on the port: ${PORT}`)
+		console.log(`Connected online to the chat on the port: ${PORT}`)
 	});
-}
+};
+	
