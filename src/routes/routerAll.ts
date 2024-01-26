@@ -1,5 +1,5 @@
 import express from "express";
-import { Router } from "express";
+import { Router, Request, Response } from "express";
 import * as authController from "../controllers/authController";
 import * as userController from "../controllers/userController";
 import * as messageController from "../controllers/messageController";
@@ -28,6 +28,10 @@ router.get("/find", messageController.findUserByNickname);
 
 //chats
 router.post("/createChat", groupChatController.createGroupChat);
+	router.get("/chat", (req: Request, res: Response) => {
+		return res.status(201).json(`Try to connect with WS ... ... `)
+	});
+
 router.post("/createPrivateChat", privateChatController.createPrivateChat);
 
 export default router;

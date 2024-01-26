@@ -5,9 +5,7 @@ import path from "path";
 
 const app = express();
 const myServer = http.createServer(app);
-
 const wsServer = new WebSocket.Server({ noServer: true });
-let dynamicPort = 3001; // default value for this app
 
 app.use("/", express.static(path.resolve(__dirname, '../client/index.html')))
 
@@ -39,15 +37,8 @@ myServer.on("upgrade", async function upgrade(request, socket, head) {
 	});
 }); 
 
+const PORT = 5001;
 
-export const handleNewChat = (newChatId: string) => {
-	
-	const PORT = parseInt(newChatId) + 3001;
-	
-	console.log(`PORT for chat ${newChatId}`);
-	
-	myServer.listen(PORT, () => {
-		console.log(`Connected online to the chat on the port: ${PORT}`)
-	});
-};
-	
+myServer.listen(PORT, () => {
+	console.log(`Connected online to the chat on the port: ${PORT}`)
+});

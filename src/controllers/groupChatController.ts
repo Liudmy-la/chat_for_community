@@ -5,9 +5,6 @@ import { chatSchema, TNewChats } from '../db/schema/chats'
 import { newUserSchema } from '../db/schema/users'
 import { authenticateUser } from '../middlewares/authMiddleware'
 
-import * as connectToController from "./connectToController";
-
-
 export const createGroupChat = async (req: Request, res: Response) => {
   try {
     authenticateUser(req, res, async () => {
@@ -56,9 +53,8 @@ export const createGroupChat = async (req: Request, res: Response) => {
 	//   .returning(chatSchema.id)
 	//   .execute()
 	//   .then(result => result[0]);
-	connectToController.handleNewChat('150');
-
-      return res.status(201).json('Chat successfully created')
+	
+    return res.status(201).json('Chat successfully created')
     })
   } catch (error) {
     console.error('Error:', error)

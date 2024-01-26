@@ -1,7 +1,8 @@
-const PORT = 3001 // get PORT from backend ( controllers/connectChatController )
+const wsPort = 7001 // from backend
 
-const url = `ws://localhost:${PORT}/myWebsocket` 
-const mywsServer = new WebSocket(url) // you need npm install ws --save
+const url = `ws://localhost:${wsPort}/chatting`
+ 
+const mywsServer = new WebSocket(url) // npm install ws --save
 
 const myMessages = document.querySelector("#messages");
 const myInput = document.querySelector("#message");
@@ -10,16 +11,21 @@ const sendBtn = document.querySelector("#send");
 sendBtn.disabled = true
 
 function msgGeneration(msg, from) {
-	const newMessage = document.createElement("h5")
-	newMessage.innerText = `[Data from ${from}] : ${msg.nic} said << ${msg.text} >> at ${msg.timeStamp} `
-	myMessages.appendChild(newMessage)
+		const newMessage = document.createElement("h5")
+		newMessage.innerText = `[Data from ${from}] : ${msg.nic} said << ${msg.text} >> at ${msg.timeStamp}`;
+
+		if (from === 'Server-side') {
+			newMessage.style.color = 'green'
+		}
+
+		myMessages.appendChild(newMessage)
 }
 
 function sendMsg() {
 	const obj = {
 		text: myInput.value,
 		nic: window.navigator.appName, // get the nic-name of user who types 
-		timeStamp: getTime() // convert its, or use other properties here
+		timeStamp: (new Date()).toUTCString() 
 	} 
 	msgGeneration(obj, "Client-side") // when you send smth
 	mywsServer.send(JSON.stringify(obj))
@@ -35,7 +41,8 @@ mywsServer.onopen = function() {
 
 mywsServer.onmessage = function(event) {
 	const receivedObj = JSON.parse(event.data);
-	msgGeneration(receivedObj, "Server-side") // when everyone already got your smth
+	msgGeneration(receivedObj, "Server-side")  // when everyone already got your smth
 
-	console.log('Received Obj:', receivedObj)
+	console.log('Received Obj:', receivedObj.text)
 }
+
