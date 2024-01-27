@@ -1,6 +1,6 @@
 import cors from "cors";
 import dotenv from "dotenv";
-import express from "express";
+import express, {Request, Response} from "express";
 import WebSocket from "ws";
 import path from "path";
 import routerAll from "./routes/routerAll";
@@ -18,7 +18,10 @@ app.use(cors());
 app.use(express.json());
 app.use("/", routerAll);
 app.use("/api_docs", swaggerRouter);
-app.use("/chatting", express.static(path.resolve(__dirname, './client/index.html')))
+
+app.use("/chat", express.static(path.resolve(__dirname, '../src/client'), {
+	setHeaders: (res) => res.setHeader('Content-Type', 'text/html')
+}));
 
 const port = process.env.PORT || 7001;
 const myServer = app.listen(port, () => { console.log(`Server is running on: http://localhost:${port}`)} );

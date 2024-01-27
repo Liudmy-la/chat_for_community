@@ -6,8 +6,6 @@ import * as messageController from "../controllers/messageController";
 import * as groupChatController from "../controllers/groupChatController";
 import * as privateChatController from "../controllers/privateChatController";
 
-// import * as connectToController from "../controllers/connectToController";
-
 const router: Router = express.Router();
 
 //auth
@@ -29,10 +27,5 @@ router.get("/find", messageController.findUserByNickname);
 //chats
 router.post("/createChat", groupChatController.createGroupChat);
 router.post("/createPrivateChat", privateChatController.createPrivateChat);
-
-
-	router.get("/chat", (req: Request, res: Response) => {
-		return res.status(201).json(`Try to connect with WS ... ... `)
-	});
 
 export default router;
