@@ -28,10 +28,11 @@ router.get("/find", messageController.findUserByNickname);
 
 //chats
 router.post("/createChat", groupChatController.createGroupChat);
+router.post("/createPrivateChat", privateChatController.createPrivateChat);
+
+
 	router.get("/chat", (req: Request, res: Response) => {
 		return res.status(201).json(`Try to connect with WS ... ... `)
 	});
-
-router.post("/createPrivateChat", privateChatController.createPrivateChat);
 
 export default router;
