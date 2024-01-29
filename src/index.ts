@@ -34,40 +34,42 @@ myServer.on("upgrade", async function upgrade(request, socket, head) {
 	});
 }); 
 
-wsServer.on('connection', function (ws: WebSocket) {  
-	const allChats: Map<string, Array<WebSocket>> = new Map();
+const allChats: Map<string, Array<WebSocket>> = new Map();
 
-	wsServer.on('connection', (ws: WebSocket) => {
+debugger
+wsServer.on('connection', (ws: WebSocket, req: Request) => {
+console.log(`CHECK: `, req.url)
+
 	// Join a specific chat
-		const chat: string = 'general';
-		if (!allChats.get(chat)) {
-			allChats.set(chat, []);
-		}
-		
-		let chatArray: Array<WebSocket> | undefined = allChats.get(chat);
+	const chat: string = 'general';
+	if (!allChats.get(chat)) {
+		allChats.set(chat, []);
+	}
+	
+	let chatArray: Array<WebSocket> | undefined = allChats.get(chat);
+	if (chatArray) {
+		chatArray.push(ws);
+	}
+// console.log('GENERAL chat :', allChats.get('general'))
+	
+	ws.on('message', function (msg: string) {
+		const receivedObj = JSON.parse(msg); //	console.log('Received Obj: ', receivedObj);
+
+		// Broadcast the message to all clients of current chat
 		if (chatArray) {
-			chatArray.push(ws);
+			chatArray.forEach((client: WebSocketClient) => {
+				if (client.readyState === WebSocket.OPEN) {
+					client.send(JSON.stringify(receivedObj));}
+			});
 		}
-		
-		ws.on('message', function (msg: string) {
-			const receivedObj = JSON.parse(msg); //	console.log('Received Obj: ', receivedObj);
+	});
 
-			// Broadcast the message to all clients of current chat
-			if (chatArray) {
-				chatArray.forEach((client: WebSocketClient) => {
-					if (client.readyState === WebSocket.OPEN) {
-						client.send(JSON.stringify(receivedObj));}
-				});
-			}
-		});
-
-		ws.on('close', () => {
-			// handle client disconnection: if WS-connection will be closed by the client or due to some error
-			if (chatArray) {
-				chatArray = chatArray.filter((member) => member !== ws);
-			}
-		});	
-	});  
-});
+	ws.on('close', () => {
+		// handle client disconnection: if WS-connection will be closed by the client or due to some error
+		if (chatArray) {
+			chatArray = chatArray.filter((member) => member !== ws);
+		}
+	});	
+});  
 
 export default app;
