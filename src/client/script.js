@@ -8,8 +8,10 @@ const mywsServer = new WebSocket(url) // npm install ws --save
 const myMessages = document.querySelector("#messages");
 const myInput = document.querySelector("#message");
 const sendBtn = document.querySelector("#send");
+const closeBtn = document.querySelector("#close");
 
 sendBtn.disabled = true
+closeBtn.disabled = true
 
 function msgGeneration(msg, from) {
 		const newMessage = document.createElement("h5")
@@ -42,10 +44,20 @@ function sendMsg() {
 	console.log('Obj to Send: ', JSON.stringify(obj))
 }
 
+function toExit() {
+	mywsServer.close()
+	sendBtn.disabled = true
+	closeBtn.disabled = true
+	
+	console.log(`Connection is crushed down ... `)
+}
+
 sendBtn.addEventListener("click", sendMsg, false)
+closeBtn.addEventListener("click", toExit, false)
 
 mywsServer.onopen = function() {
 	sendBtn.disabled = false
+	closeBtn.disabled = false
 }
 
 mywsServer.onmessage = function(event) {

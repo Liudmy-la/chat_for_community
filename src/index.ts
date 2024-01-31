@@ -52,9 +52,12 @@ wsServer.on('connection', (ws: WebSocket, req: Request) => {
 		}
 	
 		chatArray = allChats.get(chatName);
-		if (chatArray) {
+		if (chatArray && !chatArray.includes(ws)) {
 			chatArray.push(ws);
+
 			ws.send(JSON.stringify({text: `Вітаю у каналі << ${chatName} >> !`}))
+			
+			// console.log(`LIST`, allChats.get(chatName))
 		}
 	}
 	
@@ -70,12 +73,16 @@ wsServer.on('connection', (ws: WebSocket, req: Request) => {
 		}
 	});
 
-	ws.on('close', () => {
+	ws.on('close', (code, reason) => {
+		console.log('Closed because of', reason,'/ Close Code:', code)
 		// handle client disconnection: if WS-connection will be closed by the client or due to some error
 		if (chatArray) {
-			chatArray = chatArray.filter((member) => member !== ws);
+			const afterClose = chatArray.filter((member) => member !== ws);
+			chatArray = afterClose;	
+
+			console.log(`LIST after`, chatName.length)
 		}
-	});	
-});  
+	});		
+}); 
 
 export default app;
