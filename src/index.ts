@@ -6,12 +6,14 @@ import path from "path";
 import routerAll from "./routes/routerAll";
 import { swaggerRouter } from "./swagger/router";
 
+// import { verifyToken } from './utils/generateToken';
+dotenv.config();
+
 interface WebSocketClient {
 	send: (data: WebSocket.Data) => void;
 	readyState: number;
 }
 
-dotenv.config();
 const app = express();
 
 app.use(cors());
@@ -36,21 +38,25 @@ myServer.on("upgrade", async function upgrade(request, socket, head) {
 
 const allChats: Map<string, Array<WebSocket>> = new Map();
 
-debugger
-wsServer.on('connection', (ws: WebSocket, req: Request) => {
-console.log(`CHECK: `, req.url)
+wsServer.on('connection', (ws: WebSocket, req: Request) => {	
+	const url = req.url; //console.log(`CHECK: `, req.url)
 
-	// Join a specific chat
-	const chat: string = 'general';
-	if (!allChats.get(chat)) {
-		allChats.set(chat, []);
-	}
+	let chatName: string;
+	let chatArray: Array<WebSocket> | undefined;
+
+	if(url.startsWith('/chatting')) {
+		chatName = url.substring(13)
+
+		if (!allChats.get(chatName)) {
+			allChats.set(chatName, []);
+		}
 	
-	let chatArray: Array<WebSocket> | undefined = allChats.get(chat);
-	if (chatArray) {
-		chatArray.push(ws);
+		chatArray = allChats.get(chatName);
+		if (chatArray) {
+			chatArray.push(ws);
+			ws.send(JSON.stringify({text: `Вітаю у каналі << ${chatName} >> !`}))
+		}
 	}
-// console.log('GENERAL chat :', allChats.get('general'))
 	
 	ws.on('message', function (msg: string) {
 		const receivedObj = JSON.parse(msg); //	console.log('Received Obj: ', receivedObj);

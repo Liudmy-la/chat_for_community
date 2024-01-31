@@ -1,6 +1,7 @@
-const wsPort = 7001 // from backend
+const wsPort = 7001 // from backend: index.ts
+const id = 11 // from backend: controllers (groupChat || privateChat)
 
-const url = `ws://localhost:${wsPort}/chatting`
+const url = `ws://localhost:${wsPort}/chatting?id=${id}`
  
 const mywsServer = new WebSocket(url) // npm install ws --save
 
@@ -12,10 +13,18 @@ sendBtn.disabled = true
 
 function msgGeneration(msg, from) {
 		const newMessage = document.createElement("h5")
-		newMessage.innerText = `[Data from ${from}] : ${msg.nic} said << ${msg.text} >> at ${msg.timeStamp}`;
+		if (msg.nic && msg.text && msg.timeStamp) {
+			newMessage.innerText = `[Data from ${from}] : ${msg.nic} said << ${msg.text} >> at ${msg.timeStamp}`;
+		} else {
+			newMessage.innerText = `${msg.text}`
+		}
 
 		if (from === 'Server-side') {
 			newMessage.style.color = 'green'
+
+			if (myMessages.childElementCount === 0) {
+				newMessage.style.color = 'purple'
+			}
 		}
 
 		myMessages.appendChild(newMessage)
