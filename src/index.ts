@@ -36,34 +36,30 @@ myServer.on("upgrade", async function upgrade(request, socket, head) {
 	});
 }); 
 
-const allChats: Map<string, Array<WebSocket>> = new Map();
+export const allChats: Map<string, Array<WebSocket>> = new Map();
 
 wsServer.on('connection', (ws: WebSocket, req: Request) => {	
-	const url = req.url; //console.log(`CHECK: `, req.url)
-
+	const url = req.url;
 	let chatName: string;
 	let chatArray: Array<WebSocket> | undefined;
 
 	if(url.startsWith('/chatting')) {
-		chatName = url.substring(13)
-
+		chatName = url.substring(13);
 		if (!allChats.get(chatName)) {
 			allChats.set(chatName, []);
 		}
 	
-		chatArray = allChats.get(chatName);
+		chatArray = allChats.get(chatName);		
 		if (chatArray && !chatArray.includes(ws)) {
-			chatArray.push(ws);
+			chatArray.push(ws); // console.log(`ADD new WS`, chatArray.length);
+			allChats.set(chatName, chatArray);
 
-			ws.send(JSON.stringify({text: `Вітаю у каналі << ${chatName} >> !`}))
-			
-			// console.log(`LIST`, allChats.get(chatName))
+			ws.send(JSON.stringify({text: `Welcome in << ${chatName} >> !`}));
 		}
 	}
 	
 	ws.on('message', function (msg: string) {
-		const receivedObj = JSON.parse(msg); //	console.log('Received Obj: ', receivedObj);
-
+		const receivedObj = JSON.parse(msg);
 		// Broadcast the message to all clients of current chat
 		if (chatArray) {
 			chatArray.forEach((client: WebSocketClient) => {
@@ -74,15 +70,12 @@ wsServer.on('connection', (ws: WebSocket, req: Request) => {
 	});
 
 	ws.on('close', (code, reason) => {
-		console.log('Closed because of', reason,'/ Close Code:', code)
 		// handle client disconnection: if WS-connection will be closed by the client or due to some error
 		if (chatArray) {
-			const afterClose = chatArray.filter((member) => member !== ws);
-			chatArray = afterClose;	
-
-			console.log(`LIST after`, chatName.length)
+			chatArray = chatArray.filter((member) => member !== ws); // console.log(`after`, chatArray?.length)
+			allChats.set(chatName, chatArray);
 		}
-	});		
+	});
 }); 
 
 export default app;

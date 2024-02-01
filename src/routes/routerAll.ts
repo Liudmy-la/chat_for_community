@@ -6,6 +6,8 @@ import * as messageController from "../controllers/messageController";
 import * as groupChatController from "../controllers/groupChatController";
 import * as privateChatController from "../controllers/privateChatController";
 
+import {allChats} from '../index'
+
 const router: Router = express.Router();
 
 //auth
@@ -27,5 +29,19 @@ router.get("/find", messageController.findUserByNickname);
 //chats
 router.post("/createChat", groupChatController.createGroupChat);
 router.post("/createPrivateChat", privateChatController.createPrivateChat);
+
+router.get('/chat-list', function (req, res) {
+	const list = Object.fromEntries(allChats)
+    
+	if (allChats.size === 0) {
+	  return res.status(400).json({
+		message: `No Chats Available `,
+	  })
+	}
+
+	return res.status(200).json({
+	  data: Object.keys(list),
+	})
+})
 
 export default router;
