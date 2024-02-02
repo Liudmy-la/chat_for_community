@@ -14,6 +14,12 @@ interface WebSocketClient {
 	readyState: number;
 }
 
+interface ChatData {
+	permission: string | null;
+	welcome: string;
+	participants: Array<WebSocket> | undefined;
+}
+
 const app = express();
 
 app.use(cors());
@@ -24,6 +30,11 @@ app.use("/api_docs", swaggerRouter);
 app.use("/chat", express.static(path.resolve(__dirname, '../src/client'), {
 	setHeaders: (res) => res.setHeader('Content-Type', 'text/html')
 }));
+
+function checkSession () {
+	// compare secure-key from session with secure-key from DB
+	return true
+}
 
 const port = process.env.PORT || 7001;
 const myServer = app.listen(port, () => { console.log(`Server is running on: http://localhost:${port}`)} );
@@ -36,33 +47,57 @@ myServer.on("upgrade", async function upgrade(request, socket, head) {
 	});
 }); 
 
-export const allChats: Map<string, Array<WebSocket>> = new Map();
+export const allChats: Map<string, ChatData> = new Map();
 
 wsServer.on('connection', (ws: WebSocket, req: Request) => {	
 	const url = req.url;
-	let chatName: string;
-	let chatArray: Array<WebSocket> | undefined;
 
-	if(url.startsWith('/chatting')) {
-		chatName = url.substring(13);
+	let chatName: string;
+	let chatData: ChatData | undefined;
+
+	if(url.startsWith('/chat-of-')) {
+		chatName = url.substring(9);
 		if (!allChats.get(chatName)) {
-			allChats.set(chatName, []);
+			allChats.set(chatName, {
+					permission: '',
+					welcome: 'Hi there!',
+					participants: []
+				});
 		}
 	
-		chatArray = allChats.get(chatName);		
-		if (chatArray && !chatArray.includes(ws)) {
-			chatArray.push(ws); // console.log(`ADD new WS`, chatArray.length);
-			allChats.set(chatName, chatArray);
+		chatData = allChats.get(chatName);		
+		if (chatData && chatData.participants && !chatData.participants.includes(ws)) {
+			chatData.participants.push(ws); // console.log(`ADD new WS`, chatData.participants.length);
+			allChats.set(chatName, chatData);
 
-			ws.send(JSON.stringify({text: `Welcome in << ${chatName} >> !`}));
+			ws.send(JSON.stringify({text: `${chatData.welcome} We all are in << ${chatName} >> `}));
+		}
+	} else if (url.startsWith('/priv-chat-of-')) {
+		chatName = url.substring(14);
+		if (!allChats.get(chatName)) {
+			allChats.set(chatName, {
+					permission: '',
+					welcome: 'Hi there!',
+					participants: []
+				});
+		}
+
+		const isConfirmed = checkSession ()
+	
+		chatData = allChats.get(chatName);		
+		if (chatData && chatData.participants && isConfirmed && !chatData.participants.includes(ws)) {
+			chatData.participants.push(ws); // console.log(`ADD new WS`, chatData.participants.length);
+			allChats.set(chatName, chatData);
+
+			ws.send(JSON.stringify({text: `${chatData.welcome} We are << ${chatName} >> `}));
 		}
 	}
 	
 	ws.on('message', function (msg: string) {
 		const receivedObj = JSON.parse(msg);
 		// Broadcast the message to all clients of current chat
-		if (chatArray) {
-			chatArray.forEach((client: WebSocketClient) => {
+		if (chatData && chatData.participants) {
+			chatData.participants.forEach((client: WebSocketClient) => {
 				if (client.readyState === WebSocket.OPEN) {
 					client.send(JSON.stringify(receivedObj));}
 			});
@@ -71,9 +106,9 @@ wsServer.on('connection', (ws: WebSocket, req: Request) => {
 
 	ws.on('close', (code, reason) => {
 		// handle client disconnection: if WS-connection will be closed by the client or due to some error
-		if (chatArray) {
-			chatArray = chatArray.filter((member) => member !== ws); // console.log(`after`, chatArray?.length)
-			allChats.set(chatName, chatArray);
+		if (chatData && chatData.participants) {
+			chatData.participants = chatData.participants.filter((member) => member !== ws); // console.log(`after`, chatArray?.length)
+			allChats.set(chatName, chatData);
 		}
 	});
 }); 

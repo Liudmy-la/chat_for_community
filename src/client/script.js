@@ -1,9 +1,13 @@
 const wsPort = 7001 // port from backend: index.ts
-// const id = 'chronotope' // id from backend: controllers (groupChat || privateChat)
-const id = Math.floor(Math.random() * 1000) // to check getList displaying
+const id = 'chronotope' // id & isPrivate - from backend: controllers (groupChat || privateChat)
+	// const id = Math.floor(Math.random() * 1000) // to test getList 
+const isPrivate = true
 
-const url = `ws://localhost:${wsPort}/chatting?id=${id}`
- 
+let url = `ws://localhost:${wsPort}/chat-of-${id}`
+if (isPrivate) {
+	url = `ws://localhost:${wsPort}/priv-chat-of-${id}`
+}
+
 const mywsServer = new WebSocket(url) // npm install ws --save
 
 const myMessages = document.querySelector("#messages");
