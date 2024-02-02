@@ -1,5 +1,6 @@
 const wsPort = 7001 // port from backend: index.ts
-const id = 'chronotope' // id from backend: controllers (groupChat || privateChat)
+// const id = 'chronotope' // id from backend: controllers (groupChat || privateChat)
+const id = Math.floor(Math.random() * 1000) // to check getList displaying
 
 const url = `ws://localhost:${wsPort}/chatting?id=${id}`
  
@@ -30,11 +31,12 @@ async function getList () {
 	}
 }
 
-function showList (data) {	
-	const newChat = document.createElement("h5");
-	newChat.style.color = 'blue';
+function showList (data) {
+	myChats.innerHTML = '';	
 
 	for (let ch of data) {
+		const newChat = document.createElement("h5");
+		newChat.style.color = 'blue';
 		newChat.innerText = ch;
 		myChats.appendChild(newChat);
 	}
