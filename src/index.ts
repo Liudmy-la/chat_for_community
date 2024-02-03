@@ -18,6 +18,7 @@ interface ChatData {
 	permission: string | null;
 	welcome: string;
 	participants: Array<WebSocket> | undefined;
+	messStorage: Array<any>;
 }
 
 const app = express();
@@ -26,13 +27,13 @@ app.use(cors());
 app.use(express.json());
 app.use("/", routerAll);
 app.use("/api_docs", swaggerRouter);
-
+//--------------------------------------------------------------------------
 app.use("/chat", express.static(path.resolve(__dirname, '../src/client'), {
 	setHeaders: (res) => res.setHeader('Content-Type', 'text/html')
 }));
 
-function checkSession () {
-	// compare secure-key from session with secure-key from DB
+function checkAuth () {
+	// ?
 	return true
 }
 
@@ -48,12 +49,15 @@ myServer.on("upgrade", async function upgrade(request, socket, head) {
 }); 
 
 export const allChats: Map<string, ChatData> = new Map();
+export let wsTimeSpamp: any;
 
 wsServer.on('connection', (ws: WebSocket, req: Request) => {	
 	const url = req.url;
+	const isConfirmed = checkAuth();
+	wsTimeSpamp = new Date()
 
 	let chatName: string;
-	let chatData: ChatData | undefined;
+	let chatData: ChatData | undefined;	
 
 	if(url.startsWith('/chat-of-')) {
 		chatName = url.substring(9);
@@ -61,7 +65,8 @@ wsServer.on('connection', (ws: WebSocket, req: Request) => {
 			allChats.set(chatName, {
 					permission: '',
 					welcome: 'Hi there!',
-					participants: []
+					participants: [],
+					messStorage: [],
 				});
 		}
 	
@@ -72,20 +77,19 @@ wsServer.on('connection', (ws: WebSocket, req: Request) => {
 
 			ws.send(JSON.stringify({text: `${chatData.welcome} We all are in << ${chatName} >> `}));
 		}
-	} else if (url.startsWith('/priv-chat-of-')) {
+	} else if (url.startsWith('/priv-chat-of-') && isConfirmed) {
 		chatName = url.substring(14);
 		if (!allChats.get(chatName)) {
 			allChats.set(chatName, {
 					permission: '',
-					welcome: 'Hi there!',
-					participants: []
+					welcome: 'Hello!',
+					participants: [],
+					messStorage: [],
 				});
 		}
-
-		const isConfirmed = checkSession ()
 	
 		chatData = allChats.get(chatName);		
-		if (chatData && chatData.participants && isConfirmed && !chatData.participants.includes(ws)) {
+		if (chatData && chatData.participants && !chatData.participants.includes(ws)) {
 			chatData.participants.push(ws); // console.log(`ADD new WS`, chatData.participants.length);
 			allChats.set(chatName, chatData);
 
@@ -95,6 +99,10 @@ wsServer.on('connection', (ws: WebSocket, req: Request) => {
 	
 	ws.on('message', function (msg: string) {
 		const receivedObj = JSON.parse(msg);
+		if (chatData && chatData.messStorage) {
+			chatData.messStorage.push(JSON.stringify(receivedObj));
+		}
+		
 		// Broadcast the message to all clients of current chat
 		if (chatData && chatData.participants) {
 			chatData.participants.forEach((client: WebSocketClient) => {

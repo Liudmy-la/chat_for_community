@@ -1,6 +1,6 @@
 const wsPort = 7001 // port from backend: index.ts
 const id = 'chronotope' // id & isPrivate - from backend: controllers (groupChat || privateChat)
-	// const id = Math.floor(Math.random() * 1000) // to test getList 
+// const id = Math.floor(Math.random() * 1000) // test getList 
 const isPrivate = true
 
 let url = `ws://localhost:${wsPort}/chat-of-${id}`
@@ -14,19 +14,21 @@ const myMessages = document.querySelector("#messages");
 const myInput = document.querySelector("#message");
 const myChats = document.querySelector("#chats");
 
+const listBtn = document.querySelector("#chat-list");
 const sendBtn = document.querySelector("#send");
 const closeBtn = document.querySelector("#close");
-const listBtn = document.querySelector("#chat-list");
+const storageBtn = document.querySelector("#storage");
 
-sendBtn.disabled = true
-closeBtn.disabled = true
+sendBtn.disabled = true;
+closeBtn.disabled = true;
+storageBtn.disabled = true;
 
-async function getList () {
-	const res = await fetch('/chat-list', {method: 'GET'})
-    const {data} = await res.json();
-
+async function getData () {
+	const res = await fetch(`/chat-list?id=${id}`, {method: 'GET'});
+	
 	if (res.ok) {
-    	showList(data);
+        const { data } = await res.json();
+		return data
 	} else {
 		const newRes = document.createElement("h4");
 		newRes.style.color = 'red';
@@ -35,14 +37,30 @@ async function getList () {
 	}
 }
 
-function showList (data) {
+async function showList () {	
+	const data = await getData();
+
 	myChats.innerHTML = '';	
 
-	for (let ch of data) {
+	for (let ch of data.chats) {
 		const newChat = document.createElement("h5");
 		newChat.style.color = 'blue';
 		newChat.innerText = ch;
 		myChats.appendChild(newChat);
+	}
+}
+
+async function showMessages () {
+	const data = await getData();
+
+	const prevMess = document.createElement("div");
+	myMessages.prepend(prevMess)
+
+	for (let item of data.messOfChatName) {
+		const mess = document.createElement("h5")
+		mess.style.color = 'grey'
+		mess.innerText =  `${JSON.parse(item).nic} said << ${JSON.parse(item).text} >> on ${JSON.parse(item).timeStamp}`;
+		prevMess.appendChild(mess);
 	}
 }
 
@@ -73,7 +91,7 @@ function sendMsg() {
 	msgGeneration(obj, "Client-side") // when you send smth
 	mywsServer.send(JSON.stringify(obj))
 
-	console.log('Obj to Send: ', JSON.stringify(obj))
+	// console.log('Obj to Send: ', JSON.stringify(obj))
 }
 
 function toExit() {
@@ -86,17 +104,19 @@ function toExit() {
 
 sendBtn.addEventListener("click", sendMsg, false)
 closeBtn.addEventListener("click", toExit, false)
-listBtn.addEventListener("click", getList, false)
+listBtn.addEventListener("click", showList, false)
+storageBtn.addEventListener("click", showMessages, false)
 
 mywsServer.onopen = function() {
 	sendBtn.disabled = false
 	closeBtn.disabled = false
+	storageBtn.disabled = false
 }
 
 mywsServer.onmessage = function(event) {
 	const receivedObj = JSON.parse(event.data);
 	msgGeneration(receivedObj, "Server-side")  // when everyone already got your smth
 
-	console.log('Received Obj:', receivedObj.text)
+	// console.log('Received Obj:', receivedObj.text)
 }
 
