@@ -1,14 +1,14 @@
-const wsPort = 7001 // port from backend: index.ts
-const id = 'chronotope' // id & isPrivate - from backend: controllers (groupChat || privateChat)
+const wsPort = 7001 // take 'port' from backend: index.ts
+const isPrivate = true; // take 'id' & 'i'sPrivate'  from backend: controllers (groupChat || privateChat)
+const id = 'chronotope';
 // const id = Math.floor(Math.random() * 1000) // test getList 
-const isPrivate = true
 
 let url = `ws://localhost:${wsPort}/chat-of-${id}`
 if (isPrivate) {
 	url = `ws://localhost:${wsPort}/priv-chat-of-${id}`
 }
 
-const mywsServer = new WebSocket(url) // npm install ws --save
+const mywsServer = new WebSocket(url); // npm install ws --save
 
 const myMessages = document.querySelector("#messages");
 const myInput = document.querySelector("#message");
@@ -88,35 +88,32 @@ function sendMsg() {
 		nic: window.navigator.appName, // get the nic-name of user who types 
 		timeStamp: (new Date()).toUTCString() 
 	} 
-	msgGeneration(obj, "Client-side") // when you send smth
-	mywsServer.send(JSON.stringify(obj))
-
-	// console.log('Obj to Send: ', JSON.stringify(obj))
+	msgGeneration(obj, "Client-side"); // when you send smth
+	mywsServer.send(JSON.stringify(obj));
 }
 
 function toExit() {
 	mywsServer.close()
+
 	sendBtn.disabled = true
-	closeBtn.disabled = true
-	
-	console.log(`Connection is crushed down ... `)
+	closeBtn.disabled = true	
+		console.log(`Connection is crushed down ... `)
 }
 
-sendBtn.addEventListener("click", sendMsg, false)
-closeBtn.addEventListener("click", toExit, false)
-listBtn.addEventListener("click", showList, false)
-storageBtn.addEventListener("click", showMessages, false)
+sendBtn.addEventListener("click", sendMsg, false);
+closeBtn.addEventListener("click", toExit, false);
+listBtn.addEventListener("click", showList, false);
+storageBtn.addEventListener("click", showMessages, false);
 
 mywsServer.onopen = function() {
-	sendBtn.disabled = false
-	closeBtn.disabled = false
-	storageBtn.disabled = false
+	sendBtn.disabled = false;
+	closeBtn.disabled = false;
+	storageBtn.disabled = false;
 }
 
 mywsServer.onmessage = function(event) {
 	const receivedObj = JSON.parse(event.data);
-	msgGeneration(receivedObj, "Server-side")  // when everyone already got your smth
-
-	// console.log('Received Obj:', receivedObj.text)
+	// when everyone already got your smth
+	msgGeneration(receivedObj, "Server-side");
 }
 
