@@ -44,15 +44,16 @@ export const createGroupChat = async (req: Request, res: Response) => {
         name,
         description,
         userIds: [adminId],
+		// isPrivate: false,
       }
       await db.insert(chatSchema).values(newChat).execute()
 
-	//   const { id: newChatId } = await db
-	//   .insert(chatSchema)
-	//   .values(newChat)
-	//   .returning(chatSchema.id)
-	//   .execute()
-	//   .then(result => result[0]);
+	//	const { id: newChatId } = await db
+	//	.insert(chatSchema)
+	//	.values(newChat)
+	//	.returning(chatSchema.id)
+	//	.execute()
+	//	.then(result => result[0]);
 	
     return res.status(201).json('Chat successfully created')
     })

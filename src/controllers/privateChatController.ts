@@ -33,10 +33,18 @@ export const createPrivateChat = async (req: Request, res: Response) => {
 
       const newChat: TNewPrivateChat = {
         userIdOne: user.id,
-        userIdSecond: id,
+        userIdSecond: id,		
+		// isPrivate: true,
       };
 
       await db.insert(privateChatSchema).values(newChat).execute();
+
+	//	const { id: newChatId } = await db
+	//	.insert(chatSchema)
+	//	.values(newChat)
+	//	.returning(chatSchema.id)
+	//	.execute()
+	//	.then(result => result[0]);
 
       return res.status(201).json("Private Chat successfully created");
     });
