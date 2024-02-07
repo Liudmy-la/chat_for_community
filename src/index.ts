@@ -14,9 +14,13 @@ app.use(cors());
 app.use(express.json());
 app.use("/", routerAll);
 app.use("/api_docs", swaggerRouter);
+
 //--------------------------------------------------------------------------
 app.use("/chat", express.static(path.resolve(__dirname, '../src/client'), {
-	setHeaders: (res) => res.setHeader('Content-Type', 'text/html')
+	setHeaders: (res) => {
+		res.setHeader('Content-Type', 'text/html');
+		// res.setHeader('Authorization', `Bearer ${process.env.SECRET_TOKEN_KEY}`);
+	}
 }));
 
 const port = process.env.PORT || 7001;

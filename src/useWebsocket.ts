@@ -1,5 +1,5 @@
 import WebSocket from "ws";
-import { Request } from "express";
+import { Request} from "express";
 
 export interface WebSocketClient {
 	send: (data: WebSocket.Data) => void;
@@ -16,16 +16,10 @@ export interface ChatData {
 export const allChats: Map<string, ChatData> = new Map();
 export let wsTimeSpamp: any;
 
-function checkAuth() {
-	// ?
-	return true
-}
-
 const wsServer = new WebSocket.Server({ noServer: true });
 
 wsServer.on("connection", (ws: WebSocket, req: Request) => {
 	const url = req.url;
-	const isConfirmed = checkAuth();
 	wsTimeSpamp = new Date();
 
 	let chatName: string;
@@ -49,7 +43,7 @@ wsServer.on("connection", (ws: WebSocket, req: Request) => {
 
 			ws.send(JSON.stringify({ text: `${chatData.welcome} We all are in << ${chatName} >> ` }));
 		}
-	} else if (url.startsWith('/priv-chat-of-') && isConfirmed) {
+	} else if (url.startsWith('/priv-chat-of-')) {
 		chatName = url.substring(14);
 		if (!allChats.get(chatName)) {
 			allChats.set(chatName, {

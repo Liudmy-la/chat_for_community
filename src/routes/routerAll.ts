@@ -6,6 +6,7 @@ import * as messageController from "../controllers/messageController";
 import * as groupChatController from "../controllers/groupChatController";
 import * as privateChatController from "../controllers/privateChatController";
 import * as conversationController from "../controllers/conversationController";
+import { authenticateUser } from '../middlewares/authMiddleware';
 
 const router: Router = express.Router();
 
@@ -30,5 +31,6 @@ router.post("/createChat", groupChatController.createGroupChat);
 router.post("/createPrivateChat", privateChatController.createPrivateChat);
 
 router.get('/chat-list', conversationController.maintainChat);
+// router.get('/chat-list', authenticateUser, conversationController.maintainChat);
 
 export default router;

@@ -21,4 +21,4 @@ export const authenticateUser = (req: Request, res: Response, next: NextFunction
     res.status(401).json({ error: 'Invalid token' })
     next(error)
   }
-}
+} 
