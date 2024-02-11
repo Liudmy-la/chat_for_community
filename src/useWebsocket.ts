@@ -10,7 +10,7 @@ export interface ChatData {
 	permission: string | null;
 	welcome: string;
 	participants: Array<WebSocket> | undefined;
-	messStorage: Array<any>;
+	messStorage: Array<any> | null;
 }
 
 export const allChats: Map<string, ChatData> = new Map();

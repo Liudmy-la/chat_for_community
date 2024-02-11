@@ -23,3 +23,13 @@ export const newUserSchema = pgTable(
 )
 
 export type TNewUser = InferModel<typeof newUserSchema, 'insert'>
+
+// user_id - INT
+// email - varchar
+// password - ? / varchar
+// nickname - varchar
+// first_name - varchar
+// last_name - varchar
+// token - ? / varchar
+// user_created - DATETIME
+// user_avatar - varchar

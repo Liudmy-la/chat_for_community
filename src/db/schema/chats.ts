@@ -1,6 +1,3 @@
-
-
-
 import { InferModel } from "drizzle-orm";
 import { pgTable, varchar, uuid, uniqueIndex } from "drizzle-orm/pg-core";
 
@@ -24,3 +21,12 @@ export const chatSchema = pgTable(
 
 export type TChats = InferModel<typeof chatSchema>;
 export type TNewChats = InferModel<typeof chatSchema, "insert">;
+
+
+// chat_id - INT
+// is_private - TINYINT
+// chat_name - varchar
+// description - TEXT
+// greetings - TINYTEXT
+// chat_avatar - varchar
+// admin_id - INT
