@@ -24,9 +24,9 @@ export type TNewChats = InferModel<typeof chatSchema, "insert">;
 
 
 // chat_id - INT
-// is_private - TINYINT
-// chat_name - varchar
-// description - TEXT
-// greetings - TINYTEXT
+// is_private - char
+// chat_name - char
+// description - varchar
+// greetings - char
 // chat_avatar - varchar
 // admin_id - INT

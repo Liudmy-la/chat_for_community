@@ -1,12 +1,10 @@
 import { InferModel } from 'drizzle-orm'
 import { pgTable, varchar, uuid, uniqueIndex } from 'drizzle-orm/pg-core'
 
-export const newMessageSchema = pgTable(
-  'message',
+export const newPartJunctSchema = pgTable(
+  'participants_junction',
   {
     // id: uuid('id').defaultRandom().primaryKey(),
-    // email: varchar('email', { length: 50 }).notNull(),
-    // password: varchar('password').notNull(),
     // nickname: varchar('nickname', { length: 50 }).notNull(),
   },
   (table) => ({
@@ -15,9 +13,7 @@ export const newMessageSchema = pgTable(
   })
 )
 
-export type TNewMessage = InferModel<typeof newMessageSchema, 'insert'>
+export type TNewPartJunct = InferModel<typeof newPartJunctSchema, 'insert'>
 
-// message_id - INT
+// chat_id - INT
 // user_id - INT
-// message_text - varchar
-// timestamp - DATETIME
