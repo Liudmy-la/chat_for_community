@@ -1,23 +1,15 @@
 import { InferModel } from 'drizzle-orm'
-import { pgTable, varchar, uuid, uniqueIndex } from 'drizzle-orm/pg-core'
+import { pgTable, serial, varchar, time } from 'drizzle-orm/pg-core'
 
 export const newMessageSchema = pgTable(
   'message',
   {
-    // id: uuid('id').defaultRandom().primaryKey(),
-    // email: varchar('email', { length: 50 }).notNull(),
-    // password: varchar('password').notNull(),
-    // nickname: varchar('nickname', { length: 50 }).notNull(),
+    message_id: serial('message_id').primaryKey(),
+    user_id: serial('user_id').notNull(),
+    message_text: varchar('message_text').notNull(),
+    timestamp: time('timestamp').notNull(),
   },
-  (table) => ({
-    // emailIndex: uniqueIndex('emailIdx').on(table.email), ///unique
-    // nicknameIndex: uniqueIndex('nicknameIdx').on(table.nickname), ///unique
-  })
+  (table) => ({})
 )
 
 export type TNewMessage = InferModel<typeof newMessageSchema, 'insert'>
-
-// message_id - INT
-// user_id - INT
-// message_text - varchar
-// timestamp - DATETIME

@@ -1,19 +1,20 @@
 import { InferModel } from 'drizzle-orm'
-import { pgTable, varchar, uuid, uniqueIndex } from 'drizzle-orm/pg-core'
+import { pgTable, char, varchar, uuid, uniqueIndex, serial, date } from 'drizzle-orm/pg-core'
 
 const defaultPhoto = 'https://i.ibb.co/tYmqgt9/avatar.png'
 
 export const newUserSchema = pgTable(
   'users',
   {
-    id: uuid('id').defaultRandom().primaryKey(),
-    email: varchar('email', { length: 50 }).notNull(),
-    password: varchar('password').notNull(),
-    nickname: varchar('nickname', { length: 50 }).notNull(),
-    first_name: varchar('first_name', { length: 50 }),
+    // id: uuid('id').defaultRandom().primaryKey(),
+	user_id: serial('id').primaryKey(),
+    email: char('email', { length: 50 }).notNull(),
+    password: char('password').notNull(),
+    nickname: char('nickname', { length: 50 }).notNull(),
+    first_name: char('first_name', { length: 50 }),
     last_name: varchar('last_name', { length: 50 }),
-    token: varchar('token'),
-    createdAt: varchar('created_at'),
+    token: char('token'),
+    createdAt: date('created_at'),
     avatar: varchar('avatar', { length: 255 }).default(defaultPhoto),
   },
   (table) => ({
@@ -23,13 +24,3 @@ export const newUserSchema = pgTable(
 )
 
 export type TNewUser = InferModel<typeof newUserSchema, 'insert'>
-
-// user_id - INT
-// email - char
-// password - ? / char
-// nickname - char
-// first_name - char
-// last_name - char
-// token - ? / char
-// user_created - DATETIME
-// user_avatar - varchar

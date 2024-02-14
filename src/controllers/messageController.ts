@@ -24,8 +24,8 @@ export const findUserByNickname = async (req: Request, res: Response) => {
       if (users.length === 0) {
         return res.status(400).json({ error: 'User not found' })
       } else {
-        const { id, email, nickname, first_name, last_name, avatar } = users[0]
-        return res.status(200).json({ id, email, nickname, first_name, last_name, avatar })
+        const { user_id, email, nickname, first_name, last_name, avatar } = users[0]
+        return res.status(200).json({ user_id, email, nickname, first_name, last_name, avatar })
       }
     })
   } catch (error) {

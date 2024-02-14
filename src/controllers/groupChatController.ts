@@ -37,14 +37,13 @@ export const createGroupChat = async (req: Request, res: Response) => {
         return res.status(400).json({ error: 'User not found' })
       }
 
-      const { id: adminId } = user[0]
+    //   const { user_id: adminId } = user[0]
 
       const newChat: TNewChats = {
-		adminId: [adminId],
+		
         name,
         description,
-        userIds: [adminId],
-		// isPrivate: false,
+		is_private: 'false',
       }
       await db.insert(chatSchema).values(newChat).execute()
 

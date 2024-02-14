@@ -1,37 +1,44 @@
  // take 'port' from backend: index.ts
 const wsPort = 7001
 
-// take 'id' & 'i'sPrivate'  from backend: controllers (groupChat || privateChat)
-const isPrivate = true;const id = 'chronotope';
-// const id = Math.floor(Math.random() * 1000) // test getList 
+// take 'id' & 'i'sPrivate'  from backend: controllers -- groupChat
+const isPrivate = false;
+// const id = 'chronotope';
+let chat_id = Math.floor(Math.random() * 1000) // test getList 
 
 let url;
 if (!isPrivate) {
-	let url = `ws://localhost:${wsPort}/chat-of-${id}`
+	url = `ws://localhost:${wsPort}/chat-of-${chat_id}`
 }
 if (isPrivate && checkAuth) {
-		url = `ws://localhost:${wsPort}/priv-chat-of-${id}`
+		url = `ws://localhost:${wsPort}/priv-chat-of-${chat_id}`
 }
 
 //-----------------------------------------------
 
-const mywsServer = new WebSocket(url); // npm install ws --save
+let mywsServer = new WebSocket(url); // npm install ws --save
 
 const myMessages = document.querySelector("#messages");
 const myInput = document.querySelector("#message");
 const myChats = document.querySelector("#chats");
+const chatTitle = document.querySelector("#chat-title");
 
 const listBtn = document.querySelector("#chat-list");
 const sendBtn = document.querySelector("#send");
 const closeBtn = document.querySelector("#close");
 const storageBtn = document.querySelector("#storage");
+const toTheChat = document.querySelector("#anotherChat");
 
 sendBtn.disabled = true;
 closeBtn.disabled = true;
 storageBtn.disabled = true;
 
+chatTitle.innerText = `Messages of ${chat_id} Chat`
+
+//-----------------------------------------------
+
 async function getData () {
-	const res = await fetch(`/chat-list?id=${id}`, {method: 'GET'});
+	const res = await fetch(`/chat-list?id=${chat_id}`, {method: 'GET'});
 	
 	if (res.ok) {
         const { data } = await res.json();
@@ -45,8 +52,7 @@ async function getData () {
 }
 
 async function checkAuth() {
-	// ?
-	
+	// ?	
 	
 	return true
 }
@@ -57,11 +63,29 @@ async function showList () {
 	myChats.innerHTML = '';	
 
 	for (let ch of data.chats) {
-		const newChat = document.createElement("h5");
+		const newChat = document.createElement("button");
 		newChat.style.color = 'blue';
-		newChat.innerText = ch;
+		newChat.innerHTML= ch;
+		newChat.id = `anotherChat`;
+
 		myChats.appendChild(newChat);
+
+		newChat.addEventListener("click", () => changeWS(mywsServer, ch));
 	}
+}
+
+function changeWS (server, chat) {	
+	server.close();
+	myMessages.innerHTML = '';
+
+	const newServer = new WebSocket(`ws://localhost:${wsPort}/chat-of-${chat}`);
+	mywsServer = newServer;
+	chat_id = chat;
+	chatTitle.innerText = `Messages of ${chat_id} Chat`;
+
+		console.log(`In the chat ${chat} !`);
+
+	// showMessages()
 }
 
 async function showMessages () {
@@ -114,10 +138,10 @@ function toExit() {
 		console.log(`Connection is crushed down ... `)
 }
 
-sendBtn.addEventListener("click", sendMsg, false);
-closeBtn.addEventListener("click", toExit, false);
-listBtn.addEventListener("click", showList, false);
-storageBtn.addEventListener("click", showMessages, false);
+sendBtn.addEventListener("click", sendMsg);
+closeBtn.addEventListener("click", toExit);
+listBtn.addEventListener("click", showList);
+storageBtn.addEventListener("click", showMessages);
 
 mywsServer.onopen = function() {
 	sendBtn.disabled = false;
@@ -130,4 +154,3 @@ mywsServer.onmessage = function(event) {
 	// when everyone already got your smth
 	msgGeneration(receivedObj, "Server-side");
 }
-

@@ -30,8 +30,8 @@ export const getAllUsers = async (req: Request, res: Response) => {
         const [users] = await Promise.all([db.select().from(newUserSchema).execute()]);
 
         const formattedUsers = users.map((user) => {
-          const { id, email, nickname, first_name, last_name, avatar } = user;
-          return { id, email, nickname, first_name, last_name, avatar };
+          const { user_id, email, nickname, first_name, last_name, avatar } = user;
+          return { user_id, email, nickname, first_name, last_name, avatar };
         });
 
         res.status(200).json({ users: formattedUsers });
@@ -81,8 +81,8 @@ export const getUserProfile = async (req: Request, res: Response) => {
       if (users.length === 0) {
         return res.status(400).json({ error: "User not found" });
       } else {
-        const { id, email, nickname, first_name, last_name, avatar } = users[0];
-        return res.status(200).json({ id, email, nickname, first_name, last_name, avatar });
+        const { user_id, email, nickname, first_name, last_name, avatar } = users[0];
+        return res.status(200).json({ user_id, email, nickname, first_name, last_name, avatar });
       }
     });
   } catch (error) {
@@ -231,7 +231,7 @@ export const getUserAllCroupChats = async (req: Request, res: Response) => {
         if (allChats.length === 0) {
           return res.status(204).json({ error: "You have no chats" });
         } else {
-          const userChats = allChats.filter((chat) => chat.userIds?.includes(users[0].id));
+          const userChats: any = [];
           return res.status(200).json({ chats: userChats });
         }
       }
@@ -259,27 +259,30 @@ export const getUserAllPrivateChats = async (req: Request, res: Response) => {
 
       if (users.length === 0) {
         return res.status(400).json({ error: "User not found" });
-      } else {
-        const userChatsOne = await db
-          .select()
-          .from(privateChatSchema)
-          .where(eq(privateChatSchema.userIdOne, users[0].id))
-          .execute();
+    	} 
 
-        const userChatsSecond = await db
-          .select()
-          .from(privateChatSchema)
-          .where(eq(privateChatSchema.userIdSecond, users[0].id))
-          .execute();
+	return res.status(200).json("Code is not correct" );
+	// else {
+    //     const userChatsOne = await db
+    //       .select()
+    //       .from(privateChatSchema)
+    //       .where(eq(privateChatSchema.userIdOne, users[0].id))
+    //       .execute();
 
-        const userPrivateChats = [...userChatsOne, ...userChatsSecond];
+    //     const userChatsSecond = await db
+    //       .select()
+    //       .from(privateChatSchema)
+    //       .where(eq(privateChatSchema.userIdSecond, users[0].id))
+    //       .execute();
 
-        if (userPrivateChats.length === 0) {
-          return res.status(204).json({ error: "You have no private chats" });
-        } else {
-          return res.status(200).json({ userPrivateChats });
-        }
-      }
+    //     const userPrivateChats = [...userChatsOne, ...userChatsSecond];
+
+    //     if (userPrivateChats.length === 0) {
+    //       return res.status(204).json({ error: "You have no private chats" });
+    //     } else {
+    //       return res.status(200).json({ userPrivateChats });
+    //     }
+    //   }
     });
   } catch (error) {
     handleErrors(error, res);

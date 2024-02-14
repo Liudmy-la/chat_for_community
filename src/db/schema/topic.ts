@@ -1,19 +1,15 @@
 import { InferModel } from 'drizzle-orm'
-import { pgTable, varchar, uuid, uniqueIndex } from 'drizzle-orm/pg-core'
+import { pgTable, char, serial, uniqueIndex } from 'drizzle-orm/pg-core'
 
 export const newTopicSchema = pgTable(
   'topic',
   {
-    // id: uuid('id').defaultRandom().primaryKey(),
-    // nickname: varchar('nickname', { length: 50 }).notNull(),
+    topic_id: serial('topic_id').primaryKey(),
+    topic_name: char('topic_name', { length: 50 }).notNull(),
   },
   (table) => ({
-    // emailIndex: uniqueIndex('emailIdx').on(table.email), ///unique
-    // nicknameIndex: uniqueIndex('nicknameIdx').on(table.nickname), ///unique
+    topic_name: uniqueIndex('topicnameIdx').on(table.topic_name), ///unique
   })
 )
 
 export type TNewTopic = InferModel<typeof newTopicSchema, 'insert'>
-
-// topic_id - INT
-// topic_name - varchar

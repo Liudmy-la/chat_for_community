@@ -20,7 +20,7 @@ export const createPrivateChat = async (req: Request, res: Response) => {
       const userFriend = await db
         .select()
         .from(newUserSchema)
-        .where(eq(newUserSchema.id, id))
+        .where(eq(newUserSchema.user_id, id))
         .execute();
 
       if (userFriend.length === 0) {
@@ -31,13 +31,13 @@ export const createPrivateChat = async (req: Request, res: Response) => {
         await db.select().from(newUserSchema).where(eq(newUserSchema.email, userEmail)).execute()
       )[0];
 
-      const newChat: TNewPrivateChat = {
-        userIdOne: user.id,
-        userIdSecond: id,		
-		// isPrivate: true,
-      };
+    //   const newChat: TNewPrivateChat = {
+    //     userIdOne: user.id,
+    //     userIdSecond: id,		
+	// 	// isPrivate: true,
+    //   };
 
-      await db.insert(privateChatSchema).values(newChat).execute();
+    //   await db.insert(privateChatSchema).values(newChat).execute();
 
 	//	const { id: newChatId } = await db
 	//	.insert(chatSchema)

@@ -1,19 +1,12 @@
 import { InferModel } from 'drizzle-orm'
-import { pgTable, varchar, uuid, uniqueIndex } from 'drizzle-orm/pg-core'
+import { pgTable, integer } from 'drizzle-orm/pg-core'
 
 export const newRelTopicSchema = pgTable(
   'topic_junction',
   {
-    // id: uuid('id').defaultRandom().primaryKey(),
-    // nickname: varchar('nickname', { length: 50 }).notNull(),
+	chat_id: integer('chat_id'),
+	topic_id: integer('user_id'),
   },
-  (table) => ({
-    // emailIndex: uniqueIndex('emailIdx').on(table.email), ///unique
-    // nicknameIndex: uniqueIndex('nicknameIdx').on(table.nickname), ///unique
-  })
 )
 
 export type TNewPartJunct = InferModel<typeof newRelTopicSchema, 'insert'>
-
-// chat_id - INT
-// topic_id - INT

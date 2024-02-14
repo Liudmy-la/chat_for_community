@@ -1,19 +1,14 @@
-import { InferModel } from 'drizzle-orm'
-import { pgTable, varchar, uuid, uniqueIndex } from 'drizzle-orm/pg-core'
+import { InferModel } from 'drizzle-orm';
+import { pgTable, integer } from 'drizzle-orm/pg-core';
+// import {chatSchema} from './chats';
+// import {newUserSchema} from './users';
 
-export const newPartJunctSchema = pgTable(
+export const newParticipantSchema  = pgTable(
   'participants_junction',
   {
-    // id: uuid('id').defaultRandom().primaryKey(),
-    // nickname: varchar('nickname', { length: 50 }).notNull(),
+	chat_id: integer('chat_id'),
+	user_id: integer('user_id'),
   },
-  (table) => ({
-    // emailIndex: uniqueIndex('emailIdx').on(table.email), ///unique
-    // nicknameIndex: uniqueIndex('nicknameIdx').on(table.nickname), ///unique
-  })
 )
 
-export type TNewPartJunct = InferModel<typeof newPartJunctSchema, 'insert'>
-
-// chat_id - INT
-// user_id - INT
+export type TNewPartJunct = InferModel<typeof newParticipantSchema, 'insert'>

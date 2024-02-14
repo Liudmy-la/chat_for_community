@@ -1,19 +1,12 @@
 import { InferModel } from 'drizzle-orm'
-import { pgTable, varchar, uuid, uniqueIndex } from 'drizzle-orm/pg-core'
+import { pgTable, integer } from 'drizzle-orm/pg-core'
 
 export const newMessJunctSchema = pgTable(
   'message_junction',
   {
-    // id: uuid('id').defaultRandom().primaryKey(),
-    // nickname: varchar('nickname', { length: 50 }).notNull(),
+	chat_id: integer('chat_id'),
+	message_id: integer('user_id'),
   },
-  (table) => ({
-    // emailIndex: uniqueIndex('emailIdx').on(table.email), ///unique
-    // nicknameIndex: uniqueIndex('nicknameIdx').on(table.nickname), ///unique
-  })
 )
 
 export type TNewMessJunct = InferModel<typeof newMessJunctSchema, 'insert'>
-
-// chat_id - INT
-// message_id - INT
