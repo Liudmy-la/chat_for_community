@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import connect from "../db/dbConnect";
 import { privateChatSchema, TNewPrivateChat } from "../db/schema/privateChat";
 import { newUserSchema } from "../db/schema/users";
-import { authenticateUser } from "../middlewares/authMiddleware";
+import authenticateUser from "../middlewares/authMiddleware";
 
 export const createPrivateChat = async (req: Request, res: Response) => {
   try {

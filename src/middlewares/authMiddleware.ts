@@ -5,7 +5,7 @@ interface DecodedToken {
   email: string
 }
 
-export const authenticateUser = (req: Request, res: Response, next: NextFunction): void => {
+export default function authenticateUser (req: Request, res: Response, next: NextFunction): void {
   const token = req.header('Authorization')?.replace('Bearer ', '')
   if (!token) {
     res.status(401).json({ error: 'Token is required' })

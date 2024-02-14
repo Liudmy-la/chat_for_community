@@ -8,7 +8,7 @@ import upload from "../helper/multerConfig";
 import { newUserSchema } from "../db/schema/users";
 import { chatSchema } from "../db/schema/chats";
 import { privateChatSchema } from "../db/schema/privateChat";
-import { authenticateUser } from "../middlewares/authMiddleware";
+import authenticateUser from "../middlewares/authMiddleware";
 
 cloudinary.v2.config({
   cloud_name: process.env.CLOUD_NAME,

@@ -19,11 +19,20 @@ app.use("/api_docs", swaggerRouter);
 app.use("/chat", express.static(path.resolve(__dirname, '../src/client'), {
 	setHeaders: (res) => {
 		res.setHeader('Content-Type', 'text/html');
-		// res.setHeader('Authorization', `Bearer ${process.env.SECRET_TOKEN_KEY}`);
 	}
 }));
 
-const port = process.env.PORT || 7001;
+// app.post("/api/authenticate", async (req: Request, res: Response) => {
+//     const { token, email, chat_id } = req.body;
+
+//     // authentication logic here
+//     // set isAuthenticated to true, otherwise false
+//     const isAuthenticated = await authenticateUser(token, email, chat_id);
+
+//     res.json({ isAuthenticated });
+// });
+
+export const port = process.env.PORT || 7001;
 const myServer = app.listen(port, () => {
 	console.log(`Server is running on: http://localhost:${port}`)
 	});

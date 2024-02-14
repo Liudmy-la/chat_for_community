@@ -3,7 +3,7 @@ import { Request, Response } from 'express'
 import connect from '../db/dbConnect'
 import { chatSchema, TNewChats } from '../db/schema/chats'
 import { newUserSchema } from '../db/schema/users'
-import { authenticateUser } from '../middlewares/authMiddleware'
+import authenticateUser from '../middlewares/authMiddleware'
 
 export const createGroupChat = async (req: Request, res: Response) => {
   try {
