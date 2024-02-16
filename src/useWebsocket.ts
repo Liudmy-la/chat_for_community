@@ -44,7 +44,6 @@ wsServer.on("connection", (ws: WebSocket, req: Request) => {
 			ws.send(JSON.stringify({ text: `${chatData.welcome} We all are in << ${chatName} >> ` }));
 		}
 	} else if (url.startsWith('/priv-chat-')) {
-		// * check auth
 		chatName = url.substring(11);
 		if (!allChats.get(chatName)) {
 			allChats.set(chatName, {
