@@ -4,7 +4,7 @@ import { pgTable, integer } from 'drizzle-orm/pg-core';
 // import {newUserSchema} from './users';
 
 export const newParticipantSchema  = pgTable(
-  'participants_junction',
+  'participant_junc',
   {
 	chat_id: integer('chat_id'),
 	user_id: integer('user_id'),

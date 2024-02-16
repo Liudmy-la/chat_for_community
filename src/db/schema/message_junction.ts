@@ -5,7 +5,7 @@ export const newMessJunctSchema = pgTable(
   'message_junction',
   {
 	chat_id: integer('chat_id'),
-	message_id: integer('user_id'),
+	message_id: integer('message_id'),
   },
 )
 

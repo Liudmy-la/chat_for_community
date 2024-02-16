@@ -22,16 +22,6 @@ app.use("/chat", express.static(path.resolve(__dirname, '../src/client'), {
 	}
 }));
 
-// app.post("/auth", async (req: Request, res: Response) => {
-//     const { token, email, chat_id } = req.body;
-
-//     // authentication logic here
-//     // set isAuthenticated to true, otherwise false
-//     const isAuthenticated = await authenticateUser(token, email, chat_id);
-
-//     res.json({ isAuthenticated });
-// });
-
 const port = process.env.PORT || 7001;
 
 const myServer = app.listen(port, () => {
