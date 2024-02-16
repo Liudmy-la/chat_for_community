@@ -22,7 +22,7 @@ app.use("/chat", express.static(path.resolve(__dirname, '../src/client'), {
 	}
 }));
 
-// app.post("/api/authenticate", async (req: Request, res: Response) => {
+// app.post("/auth", async (req: Request, res: Response) => {
 //     const { token, email, chat_id } = req.body;
 
 //     // authentication logic here
@@ -32,7 +32,8 @@ app.use("/chat", express.static(path.resolve(__dirname, '../src/client'), {
 //     res.json({ isAuthenticated });
 // });
 
-export const port = process.env.PORT || 7001;
+const port = process.env.PORT || 7001;
+
 const myServer = app.listen(port, () => {
 	console.log(`Server is running on: http://localhost:${port}`)
 	});

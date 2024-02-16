@@ -1,26 +1,21 @@
-// import connect from '../db/dbConnect';
-// import { chatSchema } from '../db/schema/chats';
-import {port} from '../index';
+const port = 7001; // process.env.PORT 
 
 // const id = 'chronotope'; // take 'id' from backend: controllers -- groupChat
 let chat_id = Math.floor(Math.random() * 1000); // test getList 
-
 const isPrivate = false;
-// const db = connect()
-// const isPrivate = db
-// 	.select()
-// 	.from(chatSchema)
-// 	.where(eq(chatSchema.chat_id, chat_id))
-// 	.execute()
 
 function getWebSocketURL(chatId, isPrivate) {
-	const baseUrl = isPrivate ? `priv-chat-of-${chatId}` : `chat-of-${chatId}`;
+	const baseUrl = isPrivate ? `priv-chat-${chatId}` : `group-chat-${chatId}`;
 	return `ws://localhost:${port}/${baseUrl}`;
 }
 
 // npm install ws --save
 function createWebSocket(chatId, isPrivate) {
-	const url = getWebSocketURL(chatId, isPrivate);
+	let url
+	checkAuth()
+		? url = getWebSocketURL(chatId, isPrivate)
+		: document.alert(`Login and Try again.`)
+	
 	return new WebSocket(url);
 }
 //-----------------------------------------------
@@ -42,7 +37,7 @@ storageBtn.disabled = true;
 
 //-----------------------------------------------
 
-// Prepare WebSocket connection
+// Initialize WebSocket connection
 function initializeWebSocket(chatId, isPrivate) {
     const mywsServer = createWebSocket(chatId, isPrivate);
 
@@ -62,18 +57,20 @@ function initializeWebSocket(chatId, isPrivate) {
 }
 
 // Change WebSocket
-function changeWebSocket(server, chatId, isPrivate) {
+function changeWS(server, chatId, isPrivate) {
     server.close();
     myMessages.innerHTML = '';
 
-    const newWebSocket = createWebSocket(chatId, isPrivate);
+    const mywsServer = createWebSocket(chatId, isPrivate);
     chatTitle.innerText = `Messages of ${chatId} Chat`;
     console.log(`In the chat ${chatId} !`);
 
-    return newWebSocket;
+	chat_id = chatId
+
+    return mywsServer;
 }
 
-function sendMsg(server) {
+function sendMessage(server) {
     const obj = {
         text: myInput.value,
         nic: window.navigator.appName,
@@ -109,7 +106,7 @@ async function checkAuth() {
     // const email = getEmail(); 
     // const chat_id = getChatId(); 
 
-    // const response = await fetch('/api/authenticate', {
+    // const response = await fetch('/auth', {
     //     method: 'POST',
     //     headers: {
     //         'Content-Type': 'application/json'
@@ -132,16 +129,17 @@ async function showList () {
 		const newChat = document.createElement("button");
 		newChat.style.color = 'blue';
 		newChat.innerHTML= ch;
-		newChat.id = `anotherChat`;
+		const isPrivate = false;
+		newChat.id = isPrivate ? 'private' : 'group'
 
 		myChats.appendChild(newChat);
 
-		newChat.addEventListener("click", () => changeWS(mywsServer, ch));
+		newChat.addEventListener("click", () => changeWS(mywsServer, ch, isPrivate));
 	}
 }
 
-async function showMessages () {
-	const data = await getData();
+async function showMessages (id) {
+	const data = await getData(id);
 
 	const prevMess = document.createElement("div");
 	myMessages.prepend(prevMess);
@@ -174,10 +172,10 @@ function msgGeneration(msg, from) {
 	myMessages.appendChild(newMessage)
 }
 
-// Initialize WebSocket connection
+// Initialize NEW WebSocket connection
 let mywsServer = initializeWebSocket(chat_id, isPrivate);
 // Event listeners
-sendBtn.addEventListener("click", sendMsg);
-closeBtn.addEventListener("click", exitWebSocket);
-listBtn.addEventListener("click", showList);
-storageBtn.addEventListener("click", showMessages);
+sendBtn.addEventListener("click", () => sendMessage(mywsServer));
+closeBtn.addEventListener("click", () => exitWebSocket(mywsServer));
+listBtn.addEventListener("click", () => showList());
+storageBtn.addEventListener("click", () => showMessages(chat_id));
