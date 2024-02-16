@@ -1,6 +1,6 @@
 const port = 7001; // process.env.PORT 
 
-// let chat_id = 'chronotope';
+// let chat_id = '888';
 let chat_id = Math.floor(Math.random() * 1000); // test getList 
 let is_private = false;
 
