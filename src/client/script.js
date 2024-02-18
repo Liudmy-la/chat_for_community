@@ -115,7 +115,7 @@ async function showList () {
 
 	myChats.innerHTML = '';	
 
-	for (let ch of data.chats) {
+	for (let ch of data.groupChats) {
 		const newChat = document.createElement("button");
 		newChat.style.color = 'blue';
 		newChat.innerHTML= ch;
@@ -170,7 +170,7 @@ function msgGeneration(msg, from) {
 function sendMessage(server) {
 	const obj = {
 		text: myInput.value,
-		nic: window.navigator.appName,
+		// nic: window.navigator.appName,
 		timeStamp: (new Date()).toUTCString() 
 	}; 
 	msgGeneration(obj, "Client-side");
