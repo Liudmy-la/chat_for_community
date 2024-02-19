@@ -8,21 +8,20 @@ import {newMessageSchema} from '../db/schema/messages';
 import {newParticipantSchema} from '../db/schema/participant_junction';
 
 //---------------------------------------------------------
-async function getprivChats (isPrivate: string, email: string) {
+async function getPrivChats (isPrivate: string, userId: number) {
 	const db = await connect();
 	const allChats =await db
 		.select()
 		.from(chatSchema)
 		.innerJoin(newParticipantSchema, eq(newParticipantSchema.chat_id, chatSchema.chat_id))
-		.innerJoin(newUserSchema, eq(newParticipantSchema.user_id, newUserSchema.user_id))
 		.where(eq(chatSchema.is_private, isPrivate))
-		.where(eq(newUserSchema.email, email))
+		.where(eq(newParticipantSchema.user_id, userId))
 		.execute()
 	
 	return allChats;
 }
 
-async function getallChats () {
+async function getGroupChats () {
 	const db = await connect();
 	const allChats = await db
 		.select()
@@ -45,6 +44,18 @@ async function getNickname (userId: number) {
 	return nickname;
 }
 
+async function getUser (email: string) {
+	const db = await connect();
+	const user = await db
+		.select()
+		.from(newUserSchema)
+		.where(eq(newUserSchema.email, email))
+		.execute();
+	
+	const user_id = user[0].user_id
+	return user_id;
+}
+
 async function getMessages (chatId: number) {
 	const db = await connect();
 	const messagesInChat = await db
@@ -56,17 +67,40 @@ async function getMessages (chatId: number) {
 	return messagesInChat;
 }
 
+async function getTime (chatId: number, userId: number) {
+	const db = await connect();
+	const user = await db
+		.select()
+		.from(newParticipantSchema)
+		.where(eq(newParticipantSchema.chat_id, chatId))
+		.where(eq(newParticipantSchema.user_id, userId))
+		.execute();
+	
+	const connected = user[0].connected_at
+	return connected ? new Date(connected) : false;
+}
+
+// async function memberDelete (userId: number) {
+// 	const db = await connect();
+	
+// 	await db
+// 		.delete(newParticipantSchema)
+// 		.where(eq(newParticipantSchema.user_id, userId))
+// 		.execute();
+// }
+
 //---------------------------------------------------------
 
 export async function maintainChat (req: Request, res: Response) {
 	const chat: any = req.query.id;
 	
-	const userEmail = 'exaple@box'; // const userEmail = req.userEmail; // ?????? 
+	const userEmail: string = 'exaple@box'; // result of authenticateUser
+	const user = await getUser(userEmail)
 
-	const privChats = await getprivChats('true', userEmail);
+	const privChats = await getPrivChats('true', user);
 	const privChatNames : any[] = privChats.map(chat => chat.chats.name);
 
-	const groupChats = await getallChats();
+	const groupChats = await getGroupChats();
 	const groupsNameArray: any[] = groupChats.map(chat => chat.name);
 
 	if (groupChats.length === 0) {
@@ -76,6 +110,8 @@ export async function maintainChat (req: Request, res: Response) {
 	}
 
 	const messagesInChat = await getMessages (chat);
+	const connectFrom = await getTime(chat, user)
+
 	const chatsHistory: any[] = messagesInChat.map(async(msg) => {
 			const message = {
 				id: msg.message_id,
@@ -86,19 +122,18 @@ export async function maintainChat (req: Request, res: Response) {
 
 			return message
 		});
-
-	// const messOfChatName = chatsHistory.filter((item: string) => {
-	// 				const messageTimestamp = JSON.parse(item).timeStamp
-	// 				return new Date(messageTimestamp).getTime() < wsTimeSpamp.getTime()
-	// 			})
-	
-	
+		
+	const prevMessages = chatsHistory.filter((item: string) => {
+			const messageTimestamp = JSON.parse(item).timeStamp
+			return connectFrom ? new Date(messageTimestamp).getTime() < connectFrom.getTime() : null
+		})
+		
 	
 	return res.status(200).json({
 		data: {
 			privChats: privChatNames,
 			groupChats: groupsNameArray,
-			// messOfChatName: messOfChatName,
+			messOfChatName: prevMessages,
 		}
 	})
 }

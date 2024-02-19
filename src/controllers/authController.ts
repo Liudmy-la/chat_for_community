@@ -40,7 +40,7 @@ export const registerUser = async (req: Request, res: Response) => {
       first_name,
       last_name,
       token: generatedToken,
-      createdAt: new Date().toISOString(),
+      registered_at: new Date().toISOString(),
     }
 
     await db.insert(newUserSchema).values(newUser).execute()

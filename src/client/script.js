@@ -1,7 +1,8 @@
-const port = 7001; // process.env.PORT 
+const port = 'localhost:7001'; // process.env.PORT 
 
-// let chat_id = '888';
-let chat_id = Math.floor(Math.random() * 1000); // test getList 
+const user_email = 'sample@com'; // result of authenticateUser
+let chat_id = '888';
+// let chat_id = Math.floor(Math.random() * 1000); // test getList 
 let is_private = false;
 
 //-----------------------------------------------
@@ -13,7 +14,7 @@ function checkAuth() {
 
 function getWebSocketURL() {
 	const baseUrl = is_private ? `priv-chat-${chat_id}` : `group-chat-${chat_id}`;
-	return `ws://localhost:${port}/${baseUrl}`;
+	return `ws://${port}/${baseUrl}/user-${user_email}`;
 }
 
 function createWebSocket() {	
@@ -64,7 +65,7 @@ function setWebSocket() {
     mywsServer.onmessage = function(event) {
         const receivedObj = JSON.parse(event.data);		
 		// when everyone already got your smth
-        msgGeneration(receivedObj, "Server-side");
+        msgGeneration(receivedObj, "Income msg");
     };
 
 	return mywsServer;
@@ -96,7 +97,6 @@ function exitWebSocket(server) {
 async function getData () {
 	const res = await fetch(`/chat-list?id=${chat_id}`, {
 		method: 'GET',
-		api_key: 'CLOUD_API_KEY', //process.env.CLOUD_API_KEY * userController
 	});
 	
 	if (res.ok) {
@@ -149,15 +149,15 @@ async function showMessages (id) {
     });
 }
 
-function msgGeneration(msg, from) {
+function msgGeneration(msg, action) {
 	const newMessage = document.createElement("h5")
 	if (msg.nic && msg.text && msg.timeStamp) {
-		newMessage.innerText = `[Data from ${from}] : ${msg.nic} said << ${msg.text} >> on ${msg.timeStamp}`;
-	} else {
-		newMessage.innerText = `${msg.text}`
+		newMessage.innerText = `[ ${action}] : ${msg.nic} said << ${msg.text} >> on ${msg.timeStamp}`;
+	} else {		
+		newMessage.innerText = `${msg.text}`;
 	}
 
-	if (from === 'Server-side') {
+	if (action === 'Income msg') {
 		newMessage.style.color = 'green'
 
 		if (myMessages.childElementCount === 0) {
@@ -170,10 +170,10 @@ function msgGeneration(msg, from) {
 function sendMessage(server) {
 	const obj = {
 		text: myInput.value,
-		// nic: window.navigator.appName,
+		nic: 'You',
 		timeStamp: (new Date()).toUTCString() 
 	}; 
-	msgGeneration(obj, "Client-side");
+	msgGeneration(obj, obj.nic);
 	server.send(JSON.stringify(obj));
 }
 // Event listeners

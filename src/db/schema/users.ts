@@ -1,5 +1,5 @@
 import { InferModel } from 'drizzle-orm'
-import { pgTable, char, varchar, json, uuid, uniqueIndex, serial, date } from 'drizzle-orm/pg-core'
+import { pgTable, char, varchar, uuid, uniqueIndex, serial, date } from 'drizzle-orm/pg-core'
 
 const defaultPhoto = 'https://i.ibb.co/tYmqgt9/avatar.png'
 
@@ -16,7 +16,6 @@ export const newUserSchema = pgTable(
 		token: char('token'),
 		registered_at: date('registered_at'),
 		avatar: varchar('avatar', { length: 255 }).default(defaultPhoto),
-		websocket: json("websocket"),
 	},
 	(table) => ({
 		emailIndex: uniqueIndex('emailIdx').on(table.email), ///unique

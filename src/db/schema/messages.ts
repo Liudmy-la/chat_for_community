@@ -8,7 +8,7 @@ export const newMessageSchema = pgTable(
     chat_id: serial('chat_id').notNull(),
     user_id: serial('user_id').notNull(),
     timestamp: date('timestamp').notNull(),
-    message_text: varchar('message_text').notNull(),
+    message_text: varchar('message_text'),
   },
   (table) => ({})
 )

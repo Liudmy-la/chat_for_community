@@ -12,6 +12,7 @@ export interface WebSocketClient {
 	send: (data: WebSocket.Data) => void;
 	readyState: number;
 }
+
 //-----------------------------------------------
 
 async function chatExists (chatId: number) {
@@ -101,21 +102,16 @@ async function getList (chatId: number) {
 }
 //-----------------------------------------------
 
-const onConnect = () => async (ws: WebSocket, req: Request) => {
-	const url: string = req.url;
+const wsServer = new WebSocket.Server({ noServer: true });
+
+wsServer.on("connection", async(ws: WebSocket, req: Request) => {
+	const url = req.url;
 
 	const user_email: string = url.substring(url.indexOf('user-') + 5);
 
 	const searchUser = await defineUser(user_email);
 	const user_id: number = searchUser[0].user_id;
 
-	useIncomeData(url, user_id, ws)
-
-	ws.on('message', onMsg);
-
-}
-
-async function useIncomeData (url: string, user_id: number, ws: WebSocket) {	
 	const connectTime: string = (new Date()).toUTCString();
 
 	let chat_id: number;
@@ -151,34 +147,35 @@ async function useIncomeData (url: string, user_id: number, ws: WebSocket) {
 
 		ws.send(JSON.stringify({ text: `Hello! << ${chat_id} >> ` }));
 	}	
-}
 
-const onMsg = (msg: string) => async (user_id: number, chat_id: number, ws: WebSocket, msg: string) => {	
-	const receivedObj = JSON.parse(msg);
-	const newTime: string = receivedObj.timeStamp;
-	const newMsg: string = receivedObj.text;
+	ws.on('message', async (msg: string) => {
+		const receivedObj = JSON.parse(msg);
+		const newTime: string = receivedObj.timeStamp;
+		const newMsg: string = receivedObj.text;
 
-	const objToSend = {
-			text: newMsg,
-			nic: user_id,
-			timeStamp: newTime
-		};
+		const objToSend = {
+				text: newMsg,
+				nic: user_id,
+				timeStamp: newTime
+			};
 
-	await insertToDB('message', user_id, chat_id, newTime, null, newMsg);
+		await insertToDB('message', user_id, chat_id, newTime, null, newMsg);
 
-	const connectedWS = await getList(chat_id);
-	const otherParticipants = connectedWS.filter((participant) => participant !== ws)
-	otherParticipants.forEach((client) => {
-				if (client.readyState === WebSocket.OPEN) {
-					client.send(JSON.stringify(objToSend));
-				}
-			 });
+		const connectedWS = await getList(chat_id);
+		const otherParticipants = connectedWS.filter((participant) => participant !== ws)
+		otherParticipants.forEach((client) => {
+					if (client.readyState === WebSocket.OPEN) {
+						client.send(JSON.stringify(objToSend));
+					}
+			 	});
 
-	ws.send(JSON.stringify({ text: `sent` }))
-}
-//-----------------------------------------------
+		ws.send(JSON.stringify({ text: `sent` }))
+	});
 
-const wsServer = new WebSocket.Server({ noServer: true });
-wsServer.on("connection", onConnect);
+	ws.on('close', (code, reason) => {
+		// fix time of disconnection
+		// Make user off-line - if connection closed, but user didn't leave the chat		
+	});
+});
 
-export default wsServer;
+export default wsServer
