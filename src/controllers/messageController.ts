@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { Request, Response } from 'express'
-import connect from '../db/dbConnect'
+import {connect} from '../db/dbConnect'
 import { newUserSchema } from '../db/schema/users'
 import authenticateUser from '../middlewares/authMiddleware'
 
@@ -24,8 +24,8 @@ export const findUserByNickname = async (req: Request, res: Response) => {
       if (users.length === 0) {
         return res.status(400).json({ error: 'User not found' })
       } else {
-        const { user_id, email, nickname, first_name, last_name, avatar } = users[0]
-        return res.status(200).json({ user_id, email, nickname, first_name, last_name, avatar })
+        const { user_id, email, nickname, first_name, last_name, user_avatar } = users[0]
+        return res.status(200).json({ user_id, email, nickname, first_name, last_name, user_avatar })
       }
     })
   } catch (error) {

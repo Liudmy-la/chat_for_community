@@ -1,7 +1,7 @@
-import WebSocket, { Data } from "ws";
+import WebSocket from "ws";
 import { Request} from "express";
 
-import connect from './db/dbConnect';
+import {connect} from './db/dbConnect';
 import { eq } from 'drizzle-orm';
 import { chatSchema } from './db/schema/chats';
 import {newUserSchema} from './db/schema/users';
@@ -51,40 +51,39 @@ async function checkInDB (userId: number, chatId: number) {
 	return !!chatConsist;
 }
 
-async function updateTime (userId: number, chatId: number, timeStamt: string) {
+async function updateTime (userId: number, chatId: number, timeStamt: Date) {
 	const db = await connect();
 
-	await db
-	.update(newParticipantSchema)
-	.set({connected_at: timeStamt})
+	const pair = await db
+	.select()
+	.from(newParticipantSchema)
 	.where(eq(newParticipantSchema.user_id, userId))
 	.where(eq(newParticipantSchema.chat_id, chatId))
 	.execute();
 
+	const pair_id = pair[0].participant_id
+
+	await db
+	.update(newParticipantSchema)
+	.set({connected_at: timeStamt})
+	.where(eq(newParticipantSchema.participant_id, pair_id))
+	.execute();
 }
 
-async function insertToDB (
-		option: string, 
-		userId: number, 
-		chatId: number, 
-		timeStamp: string,
-		ws: WebSocket | null,
-		msg: string | null
-	) {
+async function insertParticipant (userId: number, chatId: number, timeStamp: Date, ws: WebSocket) {
 	const db = await connect();
+	await db
+		.insert(newParticipantSchema)
+		.values({chat_id: chatId, user_id: userId, connected_at: timeStamp, websocket: ws})
+		.execute();
+}
 
-	switch (option) {
-		case 'participant':	
-			await db
-				.insert(newParticipantSchema)
-				.values({chat_id: chatId, user_id: userId, connected_at: timeStamp, websocket: ws})
-				.execute();
-		case 'message':	
-			await db
-				.insert(newMessageSchema)
-				.values({chat_id: chatId, user_id: userId, timestamp: timeStamp, message_text: msg})
-				.execute();
-	}
+async function insertMessage (userId: number, chatId: number, timeStamp: Date, msg: string) {
+	const db = await connect();
+	await db
+		.insert(newMessageSchema)
+		.values({chat_id: chatId, user_id: userId, timestamp: timeStamp, message_text: msg})
+		.execute();	
 }
 
 async function getList (chatId: number) {
@@ -102,21 +101,25 @@ async function getList (chatId: number) {
 //-----------------------------------------------
 
 const onConnect = () => async (ws: WebSocket, req: Request) => {
-	const url: string = req.url;
+	try {
+		const url: string = req.url;
 
-	const user_email: string = url.substring(url.indexOf('user-') + 5);
+		const user_email: string = url.substring(url.indexOf('user-') + 5);
 
-	const searchUser = await defineUser(user_email);
-	const user_id: number = searchUser[0].user_id;
+		const searchUser = await defineUser(user_email);
+		const user_id: number = searchUser[0].user_id;
 
-	useIncomeData(url, user_id, ws)
+		useIncomeData(url, user_id, ws)
 
-	ws.on('message', onMsg);
+		ws.on('message', onMsg);
 
+	} catch (error: any) {
+		console.error(`Error onConnect : ${error.message}`);
+	}
 }
 
 async function useIncomeData (url: string, user_id: number, ws: WebSocket) {	
-	const connectTime: string = (new Date()).toUTCString();
+	const connectTime: Date = new Date();
 
 	let chat_id: number;
 	if (url.startsWith('/group-chat-')) {
@@ -132,7 +135,7 @@ async function useIncomeData (url: string, user_id: number, ws: WebSocket) {
 			await updateTime(user_id, chat_id, connectTime);
 		}
 		else {
-			await insertToDB('participant', user_id, chat_id, connectTime, ws, null);
+			await insertParticipant(user_id, chat_id, connectTime, ws);
 		}
 
 		ws.send(JSON.stringify({ text: `Welcome! << ${chat_id} >> ` }));
@@ -155,7 +158,7 @@ async function useIncomeData (url: string, user_id: number, ws: WebSocket) {
 
 const onMsg = (msg: string) => async (user_id: number, chat_id: number, ws: WebSocket, msg: string) => {	
 	const receivedObj = JSON.parse(msg);
-	const newTime: string = receivedObj.timeStamp;
+	const newTime: Date = receivedObj.timeStamp;
 	const newMsg: string = receivedObj.text;
 
 	const objToSend = {
@@ -164,7 +167,7 @@ const onMsg = (msg: string) => async (user_id: number, chat_id: number, ws: WebS
 			timeStamp: newTime
 		};
 
-	await insertToDB('message', user_id, chat_id, newTime, null, newMsg);
+	await insertMessage(user_id, chat_id, newTime, newMsg);
 
 	const connectedWS = await getList(chat_id);
 	const otherParticipants = connectedWS.filter((participant) => participant !== ws)

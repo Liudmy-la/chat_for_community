@@ -1,6 +1,6 @@
 const port = 'localhost:7001'; // process.env.PORT 
 
-const user_email = 'sample@com'; // result of authenticateUser
+const user_email = 'exaple@box'; // result of authenticateUser
 let chat_id = '888';
 // let chat_id = Math.floor(Math.random() * 1000); // test getList 
 let is_private = false;
@@ -171,7 +171,7 @@ function sendMessage(server) {
 	const obj = {
 		text: myInput.value,
 		nic: 'You',
-		timeStamp: (new Date()).toUTCString() 
+		timeStamp: new Date() 
 	}; 
 	msgGeneration(obj, obj.nic);
 	server.send(JSON.stringify(obj));

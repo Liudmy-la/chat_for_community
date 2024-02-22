@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt'
 import { eq } from 'drizzle-orm'
 import { Request, Response } from 'express'
-import connect from '../db/dbConnect'
+import {connect} from '../db/dbConnect'
 import { generateToken } from '../utils/generateToken'
 import { newUserSchema, TNewUser } from '../db/schema/users'
 
@@ -40,7 +40,7 @@ export const registerUser = async (req: Request, res: Response) => {
       first_name,
       last_name,
       token: generatedToken,
-      registered_at: new Date().toISOString(),
+      registered_at: new Date(),
     }
 
     await db.insert(newUserSchema).values(newUser).execute()

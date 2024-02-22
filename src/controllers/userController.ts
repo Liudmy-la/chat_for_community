@@ -3,11 +3,11 @@ import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import cloudinary from "cloudinary";
 import { Request, Response, NextFunction } from "express";
-import connect from "../db/dbConnect";
+import {connect} from "../db/dbConnect";
 import upload from "../helper/multerConfig";
 import { newUserSchema } from "../db/schema/users";
 import { chatSchema } from "../db/schema/chats";
-import { privateChatSchema } from "../db/schema/privateChat";
+// import { privateChatSchema } from "../db/schema/privateChat";
 import authenticateUser from "../middlewares/authMiddleware";
 
 cloudinary.v2.config({
@@ -30,8 +30,8 @@ export const getAllUsers = async (req: Request, res: Response) => {
         const [users] = await Promise.all([db.select().from(newUserSchema).execute()]);
 
         const formattedUsers = users.map((user) => {
-          const { user_id, email, nickname, first_name, last_name, avatar } = user;
-          return { user_id, email, nickname, first_name, last_name, avatar };
+          const { user_id, email, nickname, first_name, last_name, user_avatar } = user;
+          return { user_id, email, nickname, first_name, last_name, user_avatar };
         });
 
         res.status(200).json({ users: formattedUsers });
@@ -81,8 +81,8 @@ export const getUserProfile = async (req: Request, res: Response) => {
       if (users.length === 0) {
         return res.status(400).json({ error: "User not found" });
       } else {
-        const { user_id, email, nickname, first_name, last_name, avatar } = users[0];
-        return res.status(200).json({ user_id, email, nickname, first_name, last_name, avatar });
+        const { user_id, email, nickname, first_name, last_name, user_avatar } = users[0];
+        return res.status(200).json({ user_id, email, nickname, first_name, last_name, user_avatar });
       }
     });
   } catch (error) {
@@ -184,7 +184,7 @@ export const setAvatar = async (req: Request, res: Response, next: NextFunction)
 
           const updatedUser = await db
             .update(newUserSchema)
-            .set({ avatar: imageUrl })
+            .set({ user_avatar: imageUrl })
             .where(eq(newUserSchema.email, userEmail));
 
           return updatedUser;
