@@ -123,12 +123,12 @@ async function getTime (chatId: number, userId: number) {
 
 export async function maintainChat (req: Request, res: Response) {
     try {
-		const chat: any = req.query.id;
+		const chatId: any = req.query.id;
 		
-		const userEmail: string = 'exaple@box'; // result of authenticateUser
-		const user = await getUser(userEmail)
+		const userEmail: string = 'example@box'; // result of authenticateUser
+		const userId = await getUser(userEmail)
 
-		const privChats = await getPrivChats(true, user);
+		const privChats = await getPrivChats(true, userId);
 		const privChatNames : any[] = privChats.map(chat => chat.chats.chat_name);
 
 		const groupChats = await getGroupChats();
@@ -140,10 +140,14 @@ export async function maintainChat (req: Request, res: Response) {
 			})
 		}
 
-		const messagesInChat = await getMessages (chat);
-		const connectFrom = await getTime(chat, user)
+		const messagesInChat = await getMessages (chatId);
+	console.log(`chatId`, chatId)
 
-		const chatsHistory: any[] = messagesInChat.map(async(msg) => {
+		const connectFrom = await getTime(chatId, userId)
+
+		const chatsHistory: any[] = []
+		
+		for (const msg of messagesInChat) {
 				const message = {
 					id: msg.message_id,
 					text: msg.message_text,
@@ -151,14 +155,17 @@ export async function maintainChat (req: Request, res: Response) {
 					sender: await getNickname(msg.user_id),
 				}
 
-				return message
-			});
+				chatsHistory.push(message);
+			};
 			
-		const prevMessages = chatsHistory.filter((item: string) => {
-				const messageTimestamp = JSON.parse(item).timeStamp
+		let prevMessages = chatsHistory.filter((item) => {
+				const messageTimestamp = item.timeStamp;
 				return connectFrom ? new Date(messageTimestamp).getTime() < connectFrom.getTime() : null
 			})
-			
+		
+		if (!messagesInChat || prevMessages.length === 0) {
+			prevMessages = []
+		}
 		
 		return res.status(200).json({
 			data: {

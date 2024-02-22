@@ -1,7 +1,7 @@
 const port = 'localhost:7001'; // process.env.PORT 
 
-const user_email = 'exaple@box'; // result of authenticateUser
-let chat_id = '888';
+const user_email = 'example@box'; // result of authenticateUser
+let chat_id = '105';
 // let chat_id = Math.floor(Math.random() * 1000); // test getList 
 let is_private = false;
 
@@ -139,12 +139,17 @@ async function showMessages (id) {
 		myMessages.prepend(prevMess);
 	}
 
-	const parsedMessages = data.messOfChatName.map(item => JSON.parse(item));
+	if (data.messOfChatName.length === 0) {
+		const mess = document.createElement("h5");
+		mess.style.color = 'purple';
+		mess.innerText = `No messages. Start the conversation here`;
+		prevMess.appendChild(mess);
+	}
 
-	parsedMessages.forEach(parsedItem => {
+	data.messOfChatName.forEach(parsedItem => {
         const mess = document.createElement("h5");
         mess.style.color = 'grey';
-        mess.innerText = `${parsedItem.nic} said << ${parsedItem.text} >> on ${parsedItem.timeStamp}`;
+        mess.innerText = `${parsedItem.sender} said << ${parsedItem.text} >> on ${parsedItem.timeStamp}`;
         prevMess.appendChild(mess);
     });
 }

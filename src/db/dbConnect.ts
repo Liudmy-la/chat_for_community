@@ -15,20 +15,6 @@ export async function connect() {
 	return db
 }
 
- 
-// import { drizzle } from "drizzle-orm/mysql2";
-// import mysql from "mysql2/promise";
-
-// const connection = await mysql.createConnection({
-//   host: "host",
-//   user: "user",
-//   database: "database",
-//   ...
-// });
-
-// const db = drizzle(connection);
-
-
 // import { drizzle } from 'drizzle-orm/node-postgres'
 // import { Pool } from 'pg'
 // import * as dotenv from 'dotenv'

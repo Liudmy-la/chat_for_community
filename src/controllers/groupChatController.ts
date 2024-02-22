@@ -14,7 +14,7 @@ export const createGroupChat = async (req: Request, res: Response) => {
 
 	//test
 	// const isPrivate = false;
-	// const userEmail = 'exaple@box'
+	// const userEmail = 'example@box'
 	// const chatName = 'strange chat'
 	// const description = 'new way'
 	// const chatAvatar = ''

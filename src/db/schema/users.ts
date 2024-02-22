@@ -12,7 +12,7 @@ export const newUserSchema = mysqlTable(
 		nickname: char('nickname', { length: 50 }).notNull(),
 		first_name: char('first_name', { length: 50 }),
 		last_name: char('last_name', { length: 50 }),
-		token: char('token'),
+		token: char('token').notNull(),
 		registered_at: timestamp('registered_at'),
 		user_avatar: varchar('user_avatar', { length: 255 }).default(defaultPhoto),
 	},
