@@ -9,7 +9,7 @@ export const newUserSchema = mysqlTable(
 		user_id: int('user_id').notNull().primaryKey().autoincrement(),
 		email: char('email', { length: 50 }).notNull(),
 		password: char('password').notNull(),
-		nickname: char('nickname', { length: 50 }).notNull(),
+		nickname: char('nickname', { length: 20 }).notNull(),
 		first_name: char('first_name', { length: 50 }),
 		last_name: char('last_name', { length: 50 }),
 		token: char('token').notNull(),

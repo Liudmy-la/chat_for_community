@@ -1,7 +1,7 @@
 const port = 'localhost:7001'; // process.env.PORT 
 
 const user_email = 'example@box'; // result of authenticateUser
-let chat_id = '102';
+let chat_id = '102'; //from backend
 // let chat_id = Math.floor(Math.random() * 1000); // test getList 
 let is_private = false;
 

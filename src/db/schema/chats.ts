@@ -9,7 +9,7 @@ export const chatSchema = mysqlTable(
 		chat_id: int('chat_id').notNull().primaryKey().autoincrement(),
 		is_private: int('is_private').notNull(),
 		admin_id: int('admin_id'),
-		chat_name: char('chat_name', { length: 50 }),
+		chat_name: char('chat_name', { length: 50 }).notNull(),
 		description: varchar('description', { length: 2000 }),
 		chat_avatar: varchar('chat_avatar', { length: 255 }).default(defaultPhoto),
 	},
