@@ -151,14 +151,12 @@ async function getСonnectTime (chatId: number, userId: number) {
 
 export async function maintainChat (req: Request, res: Response) {
     try {
-		const chatId: any = req.query.id;
-		
+		const chatId: any = req.query.id;		
 		const userEmail: string = 'example@box'; // result of authenticateUser
 		const userId = await getUser(userEmail);
 
 		const privChatArray = await getArray(true, userId);
 		const groupChatArray = await getArray(false, userId);
-	console.log(`privChatArray: `, privChatArray)
 		
 		const commonChats = await getCommonChats();
 		const commonArray: any[] = commonChats.map(chat => ({id: chat.chat_id, name: chat.chat_name}));
@@ -171,10 +169,9 @@ export async function maintainChat (req: Request, res: Response) {
 
 		const messagesInChat = await getMessages (chatId);
 
-		const connectFrom = await getСonnectTime(chatId, userId)
-	console.log(`connectFrom: `, connectFrom)
+		const connectFrom = await getСonnectTime(chatId, userId);
 
-		const chatsHistory: any[] = []
+		const chatsHistory: any[] = [];
 		
 		for (const msg of messagesInChat) {
 				const message = {

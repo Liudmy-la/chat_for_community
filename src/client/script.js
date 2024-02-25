@@ -4,7 +4,7 @@ let chat_id = '102'; //from backend
 let is_private = false; //from backend
 //-----------------------------------------------
 
-function checkAuth() {
+async function checkAuth() {
 	// ... ... ...
 	return true
 }
@@ -20,8 +20,8 @@ function getWebSocketURL() {
 async function createWebSocket() {	
 	const url = getWebSocketURL();
 
-	const isAuth = await checkAuth(); // if use 'async' -> change isAuth
-	if (!isAuth) return null; // console.log(isAuth) 
+	const isAuth = await checkAuth();
+	if (!isAuth) return null;
     	
 	return new WebSocket(url);
 }
@@ -63,6 +63,9 @@ async function setWebSocket() {
         sendBtn.disabled = false;
         closeBtn.disabled = false;
         storageBtn.disabled = false;
+
+		
+        sendBtn.addEventListener("click", () => sendMessage(mywsServer));
     };
 
     mywsServer.onmessage = function(event) {
@@ -75,7 +78,10 @@ async function setWebSocket() {
 }
 
 async function changeWS(server, chatId, isPrivate) {
-	server.close();
+	if (server instanceof WebSocket) {
+		server.close();
+	}
+	
 	myMessages.innerHTML = '';
 	chat_id = chatId;
 	is_private = isPrivate;
@@ -215,10 +221,11 @@ function sendMessage(server) {
 		timeStamp: new Date() 
 	}; 
 	msgGeneration(obj, obj.nic);
+
 	server.send(JSON.stringify(obj));
 }
 // Event listeners
-sendBtn.addEventListener("click", () => sendMessage(mywsServer));
+// sendBtn.addEventListener("click", () => sendMessage(mywsServer));
 closeBtn.addEventListener("click", () => exitWebSocket(mywsServer));
 groupListBtn.addEventListener("click", () => joinedChats(false));
 privListBtn.addEventListener("click", () => joinedChats(true));
