@@ -2,7 +2,7 @@ import WebSocket from "ws";
 import { Request} from "express";
 
 import {connect} from './db/dbConnect';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { chatSchema } from './db/schema/chats';
 import {newUserSchema} from './db/schema/users';
 import {newMessageSchema} from './db/schema/messages';
@@ -44,8 +44,11 @@ async function checkInDB (userId: number, chatId: number) {
 	const chatConsist = await db
 		.select()
 		.from(newParticipantSchema)
-		.where(eq(newParticipantSchema.user_id, userId))
-		.where(eq(newParticipantSchema.chat_id, chatId))
+		.where(
+			and(
+				eq(newParticipantSchema.user_id, userId),
+				eq(newParticipantSchema.chat_id, chatId))
+		)
 		.execute();
 	
 	return !!chatConsist;
@@ -57,8 +60,11 @@ async function updateTime (userId: number, chatId: number, timeStamt: Date) {
 	const pair = await db
 	.select()
 	.from(newParticipantSchema)
-	.where(eq(newParticipantSchema.user_id, userId))
-	.where(eq(newParticipantSchema.chat_id, chatId))
+	.where(
+		and(
+			eq(newParticipantSchema.user_id, userId),
+			eq(newParticipantSchema.chat_id, chatId))
+	)
 	.execute();
 
 	const pair_id = pair[0].participant_id
@@ -119,41 +125,45 @@ const onConnect = () => async (ws: WebSocket, req: Request) => {
 }
 
 async function useIncomeData (url: string, user_id: number, ws: WebSocket) {	
-	const connectTime: Date = new Date();
+	try {
+		const connectTime: Date = new Date();
 
-	let chat_id: number;
-	if (url.startsWith('/group-chat-')) {
-		chat_id = Number(url.substring(12));
+		let chat_id: number;
+		if (url.startsWith('/group-chat-')) {
+			chat_id = Number(url.substring(12));
 
-		const isChat = await chatExists(chat_id);
-		if (!isChat) {
-			throw new Error (`This chat doesn't exists`);
-		}
+			const isChat = await chatExists(chat_id);
+			if (!isChat) {
+				throw new Error (`This chat doesn't exists`);
+			}
 
-		const chatConsist = await checkInDB(user_id, chat_id);
-		if (chatConsist) {
-			await updateTime(user_id, chat_id, connectTime);
-		}
-		else {
-			await insertParticipant(user_id, chat_id, connectTime, ws);
-		}
+			const chatConsist = await checkInDB(user_id, chat_id);
+			if (chatConsist) {
+				await updateTime(user_id, chat_id, connectTime);
+			}
+			else {
+				await insertParticipant(user_id, chat_id, connectTime, ws);
+			}
 
-		ws.send(JSON.stringify({ text: `Welcome! << ${chat_id} >> ` }));
-	} else if (url.startsWith('/priv-chat-')) {
-		chat_id = Number(url.substring(11));
+			ws.send(JSON.stringify({ text: `Welcome! << ${chat_id} >> ` }));
+		} else if (url.startsWith('/priv-chat-')) {
+			chat_id = Number(url.substring(11));
 
-		const isChat = await chatExists(chat_id);
-		if (!isChat) {
-			throw new Error (`This chat doesn't exists`);
-		}
+			const isChat = await chatExists(chat_id);
+			if (!isChat) {
+				throw new Error (`This chat doesn't exists`);
+			}
 
-		const chatConsist = await checkInDB(user_id, chat_id);		
-		if (chatConsist) {
-			await updateTime(user_id, chat_id, connectTime);
-		}
+			const chatConsist = await checkInDB(user_id, chat_id);		
+			if (chatConsist) {
+				await updateTime(user_id, chat_id, connectTime);
+			}
 
-		ws.send(JSON.stringify({ text: `Hello! << ${chat_id} >> ` }));
-	}	
+			ws.send(JSON.stringify({ text: `Hello! << ${chat_id} >> ` }));
+		}	
+	} catch (error: any) {
+		console.error(`Error useIncomeData : ${error.message}`);
+	}
 }
 
 const onMsg = (msg: string) => async (user_id: number, chat_id: number, ws: WebSocket, msg: string) => {	

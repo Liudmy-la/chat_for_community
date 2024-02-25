@@ -1,26 +1,26 @@
 const port = 'localhost:7001'; // process.env.PORT 
 
-const user_email = 'example@box'; // result of authenticateUser
 let chat_id = '102'; //from backend
-// let chat_id = Math.floor(Math.random() * 1000); // test getList 
-let is_private = false;
-
+let is_private = false; //from backend
 //-----------------------------------------------
 
 function checkAuth() {
-	// ... ... ?
+	// ... ... ...
 	return true
 }
+
+const user_email = 'example@box'; // result of authenticateUser
+//-----------------------------------------------
 
 function getWebSocketURL() {
 	const baseUrl = is_private ? `priv-chat-${chat_id}` : `group-chat-${chat_id}`;
 	return `ws://${port}/${baseUrl}/user-${user_email}`;
 }
 
-function createWebSocket() {	
+async function createWebSocket() {	
 	const url = getWebSocketURL();
 
-	const isAuth = checkAuth(); // if use 'async' -> change isAuth
+	const isAuth = await checkAuth(); // if use 'async' -> change isAuth
 	if (!isAuth) return null; // console.log(isAuth) 
     	
 	return new WebSocket(url);
@@ -47,8 +47,8 @@ storageBtn.disabled = true;
 
 //-----------------------------------------------
 
-function setWebSocket() {
-    const mywsServer = createWebSocket();
+async function setWebSocket() {
+    const mywsServer = await createWebSocket();
 
 	if (mywsServer === null) {	
 		if (confirm(`Login\n and Try again.`)) {
@@ -74,13 +74,13 @@ function setWebSocket() {
 	return mywsServer;
 }
 
-function changeWS(server, chatId, isPrivate) {
+async function changeWS(server, chatId, isPrivate) {
 	server.close();
 	myMessages.innerHTML = '';
 	chat_id = chatId;
 	is_private = isPrivate;
 
-	mywsServer = setWebSocket();
+	mywsServer = await setWebSocket();
 	chatTitle.innerText = `Messages of ${chat_id} Chat`;
 	
 	return mywsServer;
@@ -97,85 +97,97 @@ function exitWebSocket(server) {
 }
 
 async function getData () {
-	const res = await fetch(`/chat-list?id=${chat_id}`, {
-		method: 'GET',
-	});
-	
-	if (res.ok) {
-        const { data } = await res.json();
-		return data
-	} else {
-		const newRes = document.createElement("h4");
-		newRes.style.color = 'red';
-		newRes.innerText = data.message;
-		myChats.appendChild(newRes);
+	try {
+		const res = await fetch(`/chat-list?id=${chat_id}`, {
+			method: 'GET',
+		});
+		
+		if (res.ok) {
+			const { data } = await res.json();
+			return data
+		} else {
+			const newRes = document.createElement("h4");
+			newRes.style.color = 'red';
+			newRes.innerText = data.message;
+			myChats.appendChild(newRes);
+		}
+	} catch (error) {
+		console.error(`Error getData : ${error.message}`);
 	}
 }
 
 async function joinedChats (privData) {	
-	const data = await getData();
+	try {
+		const data = await getData();
 
-	myChats.innerHTML = '';	
+		myChats.innerHTML = '';	
 
-	const chatArray = privData ? data.privChats : data.groupChats
+		const chatArray = privData ? data.privChats : data.groupChats;
 
-	console.log(`chatArray_______________`, chatArray)
+		for (let ch of chatArray) {
+			const newChat = document.createElement("button");
+			newChat.style.color = privData ? 'orange' : 'blue';
+			newChat.innerHTML= ch.name;
+			newChat.id = privData ? 'private' : 'group'
 
-	for (let ch of chatArray) {
-		const newChat = document.createElement("button");
-		newChat.style.color = 'blue';
-		newChat.innerHTML= privData ? `friend in ${ch.id}` : ch.name;
-		newChat.id = 'group'
+			myChats.appendChild(newChat);
 
-		myChats.appendChild(newChat);
-
-		newChat.addEventListener("click", () => changeWS(mywsServer, ch.id, privData));
+			newChat.addEventListener("click", () => changeWS(mywsServer, ch.id, privData));
+		}
+	} catch (error) {
+		console.error(`Error joinedChats : ${error.message}`);
 	}
 }
 
 async function showFullList() {	
-	const data = await getData();
+	try {
+		const data = await getData();
 
-	myChats.innerHTML = '';	
+		myChats.innerHTML = '';	
 
-	for (let ch of data.commonChats) {
-		const newChat = document.createElement("button");
-		newChat.style.color = 'black';
-		newChat.innerHTML= ch.name;
-		newChat.id = 'group'
+		for (let ch of data.commonChats) {
+			const newChat = document.createElement("button");
+			newChat.style.color = 'green';
+			newChat.innerHTML= ch.name;
+			newChat.id = 'group'
 
-		myChats.appendChild(newChat);
+			myChats.appendChild(newChat);
 
-		newChat.addEventListener("click", () => changeWS(mywsServer, ch.id, false));
+			newChat.addEventListener("click", () => changeWS(mywsServer, ch.id, false));
+		}
+	} catch (error) {
+		console.error(`Error showFullList : ${error.message}`);
 	}
 }
 
 async function showMessages () {
-	const data = await getData(chat_id);
+	try {
+		const data = await getData(chat_id); //only last 8 Messages
 
-	if (document.querySelector("#prevMess")) {
-		prevMess.innerHTML = '' 
-	} else {
-		const prevMess = document.createElement("div");
-		prevMess.id = 'prevMess';
-		myMessages.prepend(prevMess);
+		if (document.querySelector("#prevMess")) {
+			prevMess.innerHTML = '' 
+		} else {
+			const prevMess = document.createElement("div");
+			prevMess.id = 'prevMess';
+			myMessages.prepend(prevMess);
+		}
+
+		if (data.messOfChatName.length === 0) {
+			const mess = document.createElement("h5");
+			mess.style.color = 'purple';
+			mess.innerText = `No messages. Start the conversation here`;
+			prevMess.appendChild(mess);
+		}
+
+		data.messOfChatName.forEach(parsedItem => {
+			const mess = document.createElement("h5");
+			mess.style.color = 'grey';
+			mess.innerText = `${parsedItem.sender} said << ${parsedItem.text} >> on ${parsedItem.timeStamp}`;
+			prevMess.prepend(mess);
+		});
+	} catch (error) {
+		console.error(`Error showMessages : ${error.message}`);
 	}
-
-	if (data.messOfChatName.length === 0) {
-		const mess = document.createElement("h5");
-		mess.style.color = 'purple';
-		mess.innerText = `No messages. Start the conversation here`;
-		prevMess.appendChild(mess);
-	}
-
-	data.messOfChatName.forEach(parsedItem => {
-        const mess = document.createElement("h5");
-        mess.style.color = 'grey';
-        mess.innerText = `${parsedItem.sender} said << ${parsedItem.text} >> on ${parsedItem.timeStamp}`;
-        prevMess.appendChild(mess);
-    });
-	
-	console.log(`SMS from chat Id: `, chat_id)
 }
 
 function msgGeneration(msg, action) {

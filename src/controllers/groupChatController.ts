@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { Request, Response } from 'express';
 import {connect} from '../db/dbConnect';
 import { chatSchema, TNewChats } from '../db/schema/chats';
@@ -62,16 +62,22 @@ async function checkPrivateChats(initUserId: number, toInviteId: number) {
 		.select()
 		.from(chatSchema)
 		.innerJoin(newParticipantSchema, eq(newParticipantSchema.chat_id, chatSchema.chat_id))
-		.where(eq(chatSchema.is_private, 1))
-		.where(eq(newParticipantSchema.user_id, initUserId))
+		.where(
+			and(
+				eq(chatSchema.is_private, 1),
+				eq(newParticipantSchema.user_id, initUserId))
+		)
 		.execute()
 
 		const toInvitechats = await db
 		.select()
 		.from(chatSchema)
 		.innerJoin(newParticipantSchema, eq(newParticipantSchema.chat_id, chatSchema.chat_id))
-		.where(eq(chatSchema.is_private, 1))
-		.where(eq(newParticipantSchema.user_id, toInviteId))
+		.where(
+			and(
+				eq(chatSchema.is_private, 1),
+				eq(newParticipantSchema.user_id, toInviteId))
+		)
 		.execute()
 
 		const initUserArray = initUserchats.map((chat: any) => chat.chats.chat_id)
@@ -98,6 +104,10 @@ export const createGroupChat = async (req: Request, res: Response) => {
 			const { chatName, description, isPrivate, toInviteNick, chatAvatar } = req.body;
 			const userEmail = req.userEmail;
 
+			if (userEmail === undefined) {
+				return res.status(401).json({ error: 'Authentication failed' })
+			}
+
 	//test
 	// const isPrivate = false;
 	// const userEmail = 'example@box'
@@ -105,10 +115,6 @@ export const createGroupChat = async (req: Request, res: Response) => {
 	// const description = 'new way'
 	// const chatAvatar = ''
 	// const toInviteNick = 'uso01'
-
-			if (userEmail === undefined) {
-				return res.status(401).json({ error: 'Invalid or missing user email' })
-			}
 
 			const db = await connect()
 
@@ -154,8 +160,7 @@ export const createGroupChat = async (req: Request, res: Response) => {
 
 				const toInviteId = participantUser[0].user_id;
 
-				const alreadyExists = await checkPrivateChats(initUserId, toInviteId)
-					
+				const alreadyExists = await checkPrivateChats(initUserId, toInviteId);					
 				if (alreadyExists) {
 					return res.status(400).json({ error: `The chat with ${toInviteNick} exists` });
 				}

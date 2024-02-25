@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 
 import {connect} from '../db/dbConnect';
-import { eq } from 'drizzle-orm';
+import { desc, eq, and } from 'drizzle-orm';
 import { chatSchema } from '../db/schema/chats';
 import {newUserSchema} from '../db/schema/users';
 import {newMessageSchema} from '../db/schema/messages';
@@ -15,14 +15,35 @@ async function getChats (isPrivate: boolean, userId: number) {
 		const allChats = await db
 			.select()
 			.from(chatSchema)
-			.innerJoin(newParticipantSchema, eq(newParticipantSchema.chat_id, chatSchema.chat_id))
-			.where(eq(newParticipantSchema.user_id, userId))
-			.where(eq(chatSchema.is_private, isPrivateData))
+			.leftJoin(newParticipantSchema, eq(newParticipantSchema.chat_id, chatSchema.chat_id))
+			.where(
+				and(
+					eq(chatSchema.is_private, isPrivateData),
+					eq(newParticipantSchema.user_id, userId))
+			)
 			.execute()
 				
 		return allChats;
 	} catch (error: any) {
 		console.error(`Error in getPrivChats: ${error.message}`);
+		throw error;
+	}
+}
+
+async function getArray (isPrivate: boolean, user: number) {
+	try {
+		const result = await getChats(isPrivate, user);
+		const chatArray : any[] = result.map(chat => ({id: chat.chats.chat_id, name: chat.chats.chat_name}));
+		
+		const uniqueArray = chatArray.filter((obj, index, self) =>
+				index === self.findIndex((t) => (
+				t.id === obj.id
+			))
+		);
+		
+		return uniqueArray
+	} catch (error: any) {
+		console.error(`Error in getArray: ${error.message}`);
 		throw error;
 	}
 }
@@ -84,6 +105,8 @@ async function getMessages (chatId: number) {
 			.select()
 			.from(newMessageSchema)
 			.where(eq(newMessageSchema.chat_id, chatId))
+			.orderBy(desc(newMessageSchema.timestamp))
+			.limit(8)
 			.execute();
 			
 		return messagesInChat;
@@ -93,14 +116,18 @@ async function getMessages (chatId: number) {
 	}
 }
 
-async function getTime (chatId: number, userId: number) {
+async function getСonnectTime (chatId: number, userId: number) {
 	try {
 		const db = await connect();
 		const user = await db
 			.select()
 			.from(newParticipantSchema)
-			.where(eq(newParticipantSchema.chat_id, chatId))
-			.where(eq(newParticipantSchema.user_id, userId))
+			.where(
+				and(
+					eq(newParticipantSchema.chat_id, chatId),
+					eq(newParticipantSchema.user_id, userId)
+				)
+			)
 			.execute();
 		
 		const connected = user[0].connected_at
@@ -122,37 +149,16 @@ async function getTime (chatId: number, userId: number) {
 
 //---------------------------------------------------------
 
-async function getArray (isPrivate: boolean, user: number) {
-	const result = await getChats(isPrivate, user);
-	const chatArray : any[] = result.map(chat => ({id: chat.chats.chat_id, name: chat.chats.chat_name}));
-	
-	const uniqueArray = chatArray.filter((obj, index, self) =>
-			index === self.findIndex((t) => (
-			t.id === obj.id
-		))
-	);
-	
-	return uniqueArray
-}
-
 export async function maintainChat (req: Request, res: Response) {
     try {
 		const chatId: any = req.query.id;
 		
 		const userEmail: string = 'example@box'; // result of authenticateUser
-		const userId = await getUser(userEmail)
-
-		// const privChats = await getChats(true, userId);
-		// const privChatArray : any[] = privChats.map(chat => chat.chats.chat_name);
-
-		// const groupChats = await getChats(false, userId);
-		// const groupChatArray: any[] = groupChats.map(chat => ({id: chat.chats.chat_id, name: chat.chats.chat_name}));
+		const userId = await getUser(userEmail);
 
 		const privChatArray = await getArray(true, userId);
 		const groupChatArray = await getArray(false, userId);
-		console.log(`privChatArray_______________`, privChatArray)
-		console.log(`groupChatArray_______________`, groupChatArray)
-
+	console.log(`privChatArray: `, privChatArray)
 		
 		const commonChats = await getCommonChats();
 		const commonArray: any[] = commonChats.map(chat => ({id: chat.chat_id, name: chat.chat_name}));
@@ -165,7 +171,8 @@ export async function maintainChat (req: Request, res: Response) {
 
 		const messagesInChat = await getMessages (chatId);
 
-		const connectFrom = await getTime(chatId, userId)
+		const connectFrom = await getСonnectTime(chatId, userId)
+	console.log(`connectFrom: `, connectFrom)
 
 		const chatsHistory: any[] = []
 		
