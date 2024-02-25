@@ -125,7 +125,14 @@ async function getTime (chatId: number, userId: number) {
 async function getArray (isPrivate: boolean, user: number) {
 	const result = await getChats(isPrivate, user);
 	const chatArray : any[] = result.map(chat => ({id: chat.chats.chat_id, name: chat.chats.chat_name}));
-	return chatArray
+	
+	const uniqueArray = chatArray.filter((obj, index, self) =>
+			index === self.findIndex((t) => (
+			t.id === obj.id
+		))
+	);
+	
+	return uniqueArray
 }
 
 export async function maintainChat (req: Request, res: Response) {
