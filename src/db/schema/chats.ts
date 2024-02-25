@@ -7,7 +7,7 @@ export const chatSchema = mysqlTable(
 	"chats",
 	{
 		chat_id: int('chat_id').notNull().primaryKey().autoincrement(),
-		is_private: boolean('is_private').notNull(),
+		is_private: int('is_private').notNull(),
 		admin_id: int('admin_id'),
 		chat_name: char('chat_name', { length: 50 }),
 		description: varchar('description', { length: 2000 }),

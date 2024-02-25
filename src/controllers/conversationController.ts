@@ -8,17 +8,18 @@ import {newMessageSchema} from '../db/schema/messages';
 import {newParticipantSchema} from '../db/schema/participant_junction';
 
 //---------------------------------------------------------
-async function getPrivChats (isPrivate: boolean, userId: number) {
+async function getChats (isPrivate: boolean, userId: number) {
 	try {
+		const isPrivateData = isPrivate ? 1 : 0;
 		const db = await connect();
-		const allChats =await db
+		const allChats = await db
 			.select()
 			.from(chatSchema)
 			.innerJoin(newParticipantSchema, eq(newParticipantSchema.chat_id, chatSchema.chat_id))
-			.where(eq(chatSchema.is_private, isPrivate))
 			.where(eq(newParticipantSchema.user_id, userId))
+			.where(eq(chatSchema.is_private, isPrivateData))
 			.execute()
-		
+				
 		return allChats;
 	} catch (error: any) {
 		console.error(`Error in getPrivChats: ${error.message}`);
@@ -26,18 +27,18 @@ async function getPrivChats (isPrivate: boolean, userId: number) {
 	}
 }
 
-async function getGroupChats () {
+async function getCommonChats () {
 	try {
 		const db = await connect();
 		const allChats = await db
 			.select()
 			.from(chatSchema)
-			.where(eq(chatSchema.is_private, false))
+			.where(eq(chatSchema.is_private, 0))
 			.execute()
 		
 		return allChats;
 	} catch (error: any) {
-		console.error(`Error in getGroupChats: ${error.message}`);
+		console.error(`Error in getCommonChats: ${error.message}`);
 		throw error;
 	}
 }
@@ -121,6 +122,12 @@ async function getTime (chatId: number, userId: number) {
 
 //---------------------------------------------------------
 
+async function getArray (isPrivate: boolean, user: number) {
+	const result = await getChats(isPrivate, user);
+	const chatArray : any[] = result.map(chat => ({id: chat.chats.chat_id, name: chat.chats.chat_name}));
+	return chatArray
+}
+
 export async function maintainChat (req: Request, res: Response) {
     try {
 		const chatId: any = req.query.id;
@@ -128,20 +135,28 @@ export async function maintainChat (req: Request, res: Response) {
 		const userEmail: string = 'example@box'; // result of authenticateUser
 		const userId = await getUser(userEmail)
 
-		const privChats = await getPrivChats(true, userId);
-		const privChatNames : any[] = privChats.map(chat => chat.chats.chat_name);
+		// const privChats = await getChats(true, userId);
+		// const privChatArray : any[] = privChats.map(chat => chat.chats.chat_name);
 
-		const groupChats = await getGroupChats();
-		const groupsNameArray: any[] = groupChats.map(chat => chat.chat_name);
+		// const groupChats = await getChats(false, userId);
+		// const groupChatArray: any[] = groupChats.map(chat => ({id: chat.chats.chat_id, name: chat.chats.chat_name}));
 
-		if (groupChats.length === 0) {
+		const privChatArray = await getArray(true, userId);
+		const groupChatArray = await getArray(false, userId);
+		console.log(`privChatArray_______________`, privChatArray)
+		console.log(`groupChatArray_______________`, groupChatArray)
+
+		
+		const commonChats = await getCommonChats();
+		const commonArray: any[] = commonChats.map(chat => ({id: chat.chat_id, name: chat.chat_name}));
+
+		if (commonArray.length === 0) {
 			return res.status(400).json({
-				message: `No Group Chats Available `,
+				message: `No Common Chats Available `,
 			})
 		}
 
 		const messagesInChat = await getMessages (chatId);
-	console.log(`chatId`, chatId)
 
 		const connectFrom = await getTime(chatId, userId)
 
@@ -169,8 +184,9 @@ export async function maintainChat (req: Request, res: Response) {
 		
 		return res.status(200).json({
 			data: {
-				privChats: privChatNames,
-				groupChats: groupsNameArray,
+				privChats: privChatArray,
+				groupChats: groupChatArray,
+				commonChats: commonArray,
 				messOfChatName: prevMessages,
 			}
 		})

@@ -1,7 +1,7 @@
 const port = 'localhost:7001'; // process.env.PORT 
 
 const user_email = 'example@box'; // result of authenticateUser
-let chat_id = '105';
+let chat_id = '102';
 // let chat_id = Math.floor(Math.random() * 1000); // test getList 
 let is_private = false;
 
@@ -31,9 +31,12 @@ const myMessages = document.querySelector("#messages");
 const myInput = document.querySelector("#message");
 const myChats = document.querySelector("#chats");
 const chatTitle = document.querySelector("#chat-title");
-	chatTitle.innerText = `Messages of ${chat_id} Chat`
+	chatTitle.innerText = `Messages of << ${chat_id} >> Chat`
 
-const listBtn = document.querySelector("#chat-list");
+const groupListBtn = document.querySelector("#group-list");
+const privListBtn = document.querySelector("#priv-list");
+const fullListBtn = document.querySelector("#full-list");
+
 const sendBtn = document.querySelector("#send");
 const closeBtn = document.querySelector("#close");
 const storageBtn = document.querySelector("#storage");
@@ -79,7 +82,6 @@ function changeWS(server, chatId, isPrivate) {
 
 	mywsServer = setWebSocket();
 	chatTitle.innerText = `Messages of ${chat_id} Chat`;
-		console.log(`In the chat ${chat_id} !`);
 	
 	return mywsServer;
 }
@@ -110,26 +112,46 @@ async function getData () {
 	}
 }
 
-async function showList () {	
+async function joinedChats (privData) {	
 	const data = await getData();
 
 	myChats.innerHTML = '';	
 
-	for (let ch of data.groupChats) {
+	const chatArray = privData ? data.privChats : data.groupChats
+
+	console.log(`chatArray_______________`, chatArray)
+
+	for (let ch of chatArray) {
 		const newChat = document.createElement("button");
 		newChat.style.color = 'blue';
-		newChat.innerHTML= ch;
-			const isPrivate = false; // from DB
-		newChat.id = isPrivate ? 'private' : 'group'
+		newChat.innerHTML= privData ? `friend in ${ch.id}` : ch.name;
+		newChat.id = 'group'
 
 		myChats.appendChild(newChat);
 
-		newChat.addEventListener("click", () => changeWS(mywsServer, ch, isPrivate));
+		newChat.addEventListener("click", () => changeWS(mywsServer, ch.id, privData));
 	}
 }
 
-async function showMessages (id) {
-	const data = await getData(id);
+async function showFullList() {	
+	const data = await getData();
+
+	myChats.innerHTML = '';	
+
+	for (let ch of data.commonChats) {
+		const newChat = document.createElement("button");
+		newChat.style.color = 'black';
+		newChat.innerHTML= ch.name;
+		newChat.id = 'group'
+
+		myChats.appendChild(newChat);
+
+		newChat.addEventListener("click", () => changeWS(mywsServer, ch.id, false));
+	}
+}
+
+async function showMessages () {
+	const data = await getData(chat_id);
 
 	if (document.querySelector("#prevMess")) {
 		prevMess.innerHTML = '' 
@@ -152,6 +174,8 @@ async function showMessages (id) {
         mess.innerText = `${parsedItem.sender} said << ${parsedItem.text} >> on ${parsedItem.timeStamp}`;
         prevMess.appendChild(mess);
     });
+	
+	console.log(`SMS from chat Id: `, chat_id)
 }
 
 function msgGeneration(msg, action) {
@@ -184,8 +208,10 @@ function sendMessage(server) {
 // Event listeners
 sendBtn.addEventListener("click", () => sendMessage(mywsServer));
 closeBtn.addEventListener("click", () => exitWebSocket(mywsServer));
-listBtn.addEventListener("click", () => showList());
-storageBtn.addEventListener("click", () => showMessages(chat_id));
+groupListBtn.addEventListener("click", () => joinedChats(false));
+privListBtn.addEventListener("click", () => joinedChats(true));
+fullListBtn.addEventListener("click", () => showFullList());
+storageBtn.addEventListener("click", () => showMessages());
 
 // NEW WebSocket connection
 let mywsServer = setWebSocket()
