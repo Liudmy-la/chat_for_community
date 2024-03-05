@@ -16,7 +16,7 @@ app.use("/", routerAll);
 app.use("/api_docs", swaggerRouter);
 
 //--------------------------------------------------------------------------
-app.use("/chat", express.static(path.resolve(__dirname, '../src/client'), {
+app.use("/chat", express.static(path.resolve(__dirname, '../client'), {
 	setHeaders: (res) => {
 		res.setHeader('Content-Type', 'text/html');
 	}

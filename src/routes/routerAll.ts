@@ -29,6 +29,7 @@ router.get("/find", messageController.findUserByNickname);
 router.post("/createChat", groupChatController.createGroupChat);
 // router.post("/createPrivateChat", privateChatController.createPrivateChat);
 
-router.get('/chat-list', conversationController.maintainChat);
+router.get('/chat-list', conversationController.chatsInfo);
+router.get('/chat-online', conversationController.chatHistoryInfo);
 
 export default router;

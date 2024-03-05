@@ -38,6 +38,7 @@ async function createNewChat(
 			chat_id: chatId,
 			user_id: initUserId,
 		};
+		
 		await db.insert(newParticipantSchema).values(participant_1).execute();
 		
 		if (toInviteId) {

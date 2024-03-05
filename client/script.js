@@ -1,4 +1,47 @@
-const port = 'localhost:7001'; // process.env.PORT 
+// import {getChatsData, getMessageData} from "../api"
+
+async function getChatsData (chatId) {
+	try {
+		const res = await fetch(`/chat-list?id=${chatId}`, {
+			method: 'GET',
+		});
+		
+		if (res.ok) {
+			const { data } = await res.json();
+			return data
+		} else {
+			const newRes = document.createElement("h4");
+			newRes.style.color = 'red';
+			newRes.innerText = data.message;
+			myChats.appendChild(newRes);
+		}
+	} catch (error) {
+		console.error(`Error getData : ${error.message}`);
+	}
+}
+
+async function getMessageData (chatId) {
+	try {
+		const res = await fetch(`/chat-online?id=${chatId}`, {
+			method: 'GET',
+		});
+		
+		if (res.ok) {
+			const { data } = await res.json();
+			return data.messOfChatName
+		} else {
+			const newRes = document.createElement("h4");
+			newRes.style.color = 'red';
+			newRes.innerText = data.message;
+			myChats.appendChild(newRes);
+		}
+	} catch (error) {
+		console.error(`Error getData : ${error.message}`);
+	}
+}
+//-----------------------------------------------
+
+const port = 'localhost:7001'; // process.env.PORT
 
 let chat_id = '102'; //from backend
 let is_private = false; //from backend
@@ -102,29 +145,9 @@ function exitWebSocket(server) {
 	} else return
 }
 
-async function getData () {
-	try {
-		const res = await fetch(`/chat-list?id=${chat_id}`, {
-			method: 'GET',
-		});
-		
-		if (res.ok) {
-			const { data } = await res.json();
-			return data
-		} else {
-			const newRes = document.createElement("h4");
-			newRes.style.color = 'red';
-			newRes.innerText = data.message;
-			myChats.appendChild(newRes);
-		}
-	} catch (error) {
-		console.error(`Error getData : ${error.message}`);
-	}
-}
-
 async function joinedChats (privData) {	
 	try {
-		const data = await getData();
+		const data = await getChatsData(chat_id);
 
 		myChats.innerHTML = '';	
 
@@ -147,7 +170,7 @@ async function joinedChats (privData) {
 
 async function showFullList() {	
 	try {
-		const data = await getData();
+		const data = await getChatsData(chat_id);
 
 		myChats.innerHTML = '';	
 
@@ -168,7 +191,7 @@ async function showFullList() {
 
 async function showMessages () {
 	try {
-		const data = await getData(chat_id); //only last 8 Messages
+		const data = await getMessageData(chat_id); //only last 8 Messages
 
 		if (document.querySelector("#prevMess")) {
 			prevMess.innerHTML = '' 
@@ -178,14 +201,14 @@ async function showMessages () {
 			myMessages.prepend(prevMess);
 		}
 
-		if (data.messOfChatName.length === 0) {
+		if (data.length === 0) {
 			const mess = document.createElement("h5");
 			mess.style.color = 'purple';
 			mess.innerText = `No messages. Start the conversation here`;
 			prevMess.appendChild(mess);
 		}
 
-		data.messOfChatName.forEach(parsedItem => {
+		data.forEach(parsedItem => {
 			const mess = document.createElement("h5");
 			mess.style.color = 'grey';
 			mess.innerText = `${parsedItem.sender} said << ${parsedItem.text} >> on ${parsedItem.timeStamp}`;
