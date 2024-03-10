@@ -88,7 +88,7 @@ const onMessage = (msg: string) => async (user_id: number, chat_id: number, ws: 
 				}
 			 });
 
-	ws.send(JSON.stringify({ text: `sent`,  timeStamp: objToSend.timeStamp}))
+	ws.send(JSON.stringify({ text: `sent`,  timeStamp: objToSend.timeStamp}));
 }
 //-----------------------------------------------
 

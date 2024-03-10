@@ -24,7 +24,7 @@ export async function getChats (isPrivate: boolean, userId: number) {
 				
 		return allChats;
 	} catch (error: any) {
-		console.error(`Error in getPrivChats: ${error.message}`);
+		console.error(`Error in getChats: ${error.message}`);
 		throw error;
 	}
 }
@@ -110,7 +110,7 @@ export async function getMessages (chatId: number) {
 			
 		return messagesInChat;
 	} catch (error: any) {
-		console.error(`Error in getPrivChats: ${error.message}`);
+		console.error(`Error in getMessages: ${error.message}`);
 		throw error;
 	}
 }
@@ -129,10 +129,12 @@ export async function getСonnectTime (chatId: number, userId: number) {
 			)
 			.execute();
 		
+		console.log(`connected user data: `, user)
+		
 		const connected = user[0].connected_at
 		return connected ? new Date(connected) : false;
 	} catch (error: any) {
-		console.error(`Error in getPrivChats: ${error.message}`);
+		console.error(`Error in getСonnectTime: ${error.message}`);
 		throw error;
 	}
 }

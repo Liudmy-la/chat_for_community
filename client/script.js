@@ -1,4 +1,4 @@
-// import { getChatsData, getMessageData } from "../api";
+// const { getChatsData, getMessageData } = require("../api");
 
 async function getChatsData (chatId) {
 	try {
@@ -16,7 +16,7 @@ async function getChatsData (chatId) {
 			myChats.appendChild(newRes);
 		}
 	} catch (error) {
-		console.error(`Error getData : ${error.message}`);
+		console.error(`Error getChatsData : ${error.message}`);
 	}
 }
 
@@ -36,7 +36,7 @@ async function getMessageData (chatId) {
 			myChats.appendChild(newRes);
 		}
 	} catch (error) {
-		console.error(`Error getData : ${error.message}`);
+		console.error(`Error getMessageData : ${error.message}`);
 	}
 }
 //-----------------------------------------------

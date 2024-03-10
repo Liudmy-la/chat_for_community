@@ -57,6 +57,9 @@ export async function chatHistoryInfo (req: Request, res: Response) {
 		const messagesInChat = await getMessages (chatId);
 
 		const connectFrom = await getСonnectTime(chatId, userId);
+		if (connectFrom === false) {
+			throw Error(`Can't find user connection data. Refresh the page.`)
+		}
 
 		const chatsHistory: any[] = [];
 		

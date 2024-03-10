@@ -1,4 +1,4 @@
-export async function getChatsData (chatId) {
+async function getChatsData (chatId) {
 	try {
 		const res = await fetch(`/chat-list?id=${chatId}`, {
 			method: 'GET',
@@ -14,11 +14,11 @@ export async function getChatsData (chatId) {
 			myChats.appendChild(newRes);
 		}
 	} catch (error) {
-		console.error(`Error getData : ${error.message}`);
+		console.error(`Error getChatsData : ${error.message}`);
 	}
 };
 
-export async function getMessageData (chatId) {
+async function getMessageData (chatId) {
 	try {
 		const res = await fetch(`/chat-online?id=${chatId}`, {
 			method: 'GET',
@@ -34,6 +34,8 @@ export async function getMessageData (chatId) {
 			myChats.appendChild(newRes);
 		}
 	} catch (error) {
-		console.error(`Error getData : ${error.message}`);
+		console.error(`Error getMessageData : ${error.message}`);
 	}
 };
+
+module.exports = {getChatsData, getMessageData}
