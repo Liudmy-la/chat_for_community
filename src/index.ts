@@ -5,7 +5,7 @@ import WebSocket from "ws";
 import path from "path";
 import routerAll from "./routes/routerAll";
 import { swaggerRouter } from "./swagger/router";
-import wsServer from "./useWebsocket";
+import wsServer from "./websocket/useWebsocket";
 
 dotenv.config();
 

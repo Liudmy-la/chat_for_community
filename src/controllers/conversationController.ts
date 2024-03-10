@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import {getChats, getArray, getCommonChats, getNickname, getUser, getMessages, getСonnectTime} from "./onConnecFunctions";
+import {getChats, getArray, getCommonChats, getNickname, getUser, getMessages, getСonnectTime} from "./onConnectFunctions";
 
  //---------------------------------------------------------
 

@@ -1,4 +1,4 @@
-// import {getChatsData, getMessageData} from "../api"
+// import { getChatsData, getMessageData } from "../api";
 
 async function getChatsData (chatId) {
 	try {
@@ -106,7 +106,6 @@ async function setWebSocket() {
         sendBtn.disabled = false;
         closeBtn.disabled = false;
         storageBtn.disabled = false;
-
 		
         sendBtn.addEventListener("click", () => sendMessage(mywsServer));
     };
@@ -141,7 +140,7 @@ function exitWebSocket(server) {
 		sendBtn.disabled = true;
 		closeBtn.disabled = true;
 
-		document.location.assign(`http://localhost:7001/allCroups`);
+		document.location.assign(`http://localhost:7001/allGroups`);
 	} else return
 }
 
@@ -222,9 +221,9 @@ async function showMessages () {
 function msgGeneration(msg, action) {
 	const newMessage = document.createElement("h5")
 	if (msg.nic && msg.text && msg.timeStamp) {
-		newMessage.innerText = `[ ${action}] : ${msg.nic} said << ${msg.text} >> on ${msg.timeStamp}`;
+		newMessage.innerText = `[ ${action}] : ${msg.nic} said << ${msg.text} >> on ${msg.timeStamp.toUTCString()}`;
 	} else {		
-		newMessage.innerText = `${msg.text}`;
+		newMessage.innerText = `<< ${msg.text} >> at ${msg.timeStamp.toUTCString()}`;
 	}
 
 	if (action === 'Income msg') {
@@ -234,7 +233,7 @@ function msgGeneration(msg, action) {
 			newMessage.style.color = 'purple'
 		}
 	}
-	myMessages.appendChild(newMessage)
+	myMessages.appendChild(newMessage);
 }
 
 function sendMessage(server) {
@@ -256,4 +255,4 @@ fullListBtn.addEventListener("click", () => showFullList());
 storageBtn.addEventListener("click", () => showMessages());
 
 // NEW WebSocket connection
-let mywsServer = setWebSocket()
+let mywsServer = setWebSocket();

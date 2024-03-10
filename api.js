@@ -16,7 +16,7 @@ export async function getChatsData (chatId) {
 	} catch (error) {
 		console.error(`Error getData : ${error.message}`);
 	}
-}
+};
 
 export async function getMessageData (chatId) {
 	try {
@@ -36,4 +36,4 @@ export async function getMessageData (chatId) {
 	} catch (error) {
 		console.error(`Error getData : ${error.message}`);
 	}
-}
+};
