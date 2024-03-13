@@ -2,7 +2,7 @@ import express, { Router } from "express";
 
 import * as authController from "../controllers/authController";
 import * as userController from "../controllers/userController";
-import * as groupChatController from "../controllers/chatCreateController";
+import * as chatCreateController from "../controllers/chatCreateController";
 import * as chatListsController from "../controllers/chatListsController";
 import * as chatHistoryController from "../controllers/chatHistoryController";
 
@@ -23,7 +23,7 @@ router.get("/chat-conversation", chatHistoryController.chatHistoryInfo);
 // router.get("/find", ** findChatByText);
 
 //chats & participants
-router.post("/chat-create", groupChatController.createGroupChat);
+router.post("/chat-create", chatCreateController.initCreateChat);
 router.get("/chat-list", chatListsController.chatsInfo);
 router.get("/user-list", chatListsController.usersInfo);
 

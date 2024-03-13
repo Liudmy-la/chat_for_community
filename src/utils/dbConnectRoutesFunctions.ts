@@ -102,12 +102,10 @@ export async function chatParticipants(chatId: number) {
 	}
 }
 
-
 export async function getPrivCollocutors (userId: number) {
 	try {
 		const result = await getChats(true, userId);
-		const privChatArray : number[] = result.map(
-				chat => chat.chats.chat_id);
+		const privChatArray : number[] = result.map(chat => chat.chats.chat_id);
 
 		const db = await connect();
 		const allChats = await db
@@ -121,14 +119,12 @@ export async function getPrivCollocutors (userId: number) {
 			)
 			.execute()
 		
-		const allCollocutors = allChats.map(
-				(chat) => {
-					if (chat && chat.users) {
-						return {chatId: chat.participant__junction.chat_id, user: chat.users.nickname}
-					} else {
-						return null
-					}
-				});
+		const allCollocutors = allChats
+			.map((chat) => 
+				chat && chat.users 
+				&& {chatId: chat.participant__junction.chat_id, user: chat.users.nickname}			
+			)
+			.filter(Boolean);
 		
 		return allCollocutors;
 	} catch (error: any) {
@@ -163,8 +159,10 @@ export async function getUser (email: string) {
 			.where(eq(newUserSchema.email, email))
 			.execute();
 		
-		const id = user[0].user_id
-		return id;
+		const id = user[0].user_id;
+		const nick = user[0].nickname;
+
+		return user.length !== 0 ? {userId: id, userNick: nick} : null;
 	} catch (error: any) {
 		console.error(`Error in getUser: ${error.message}`);
 		throw error;

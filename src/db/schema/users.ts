@@ -6,10 +6,10 @@ const defaultPhoto = 'https://i.ibb.co/tYmqgt9/avatar.png';
 export const newUserSchema = mysqlTable(
 	'users',
 	{
-		user_id: int('user_id').notNull().primaryKey().autoincrement(),
-		email: char('email', { length: 50 }).notNull(),
+		user_id: int('user_id').notNull().primaryKey().autoincrement(), //unique
+		email: char('email', { length: 50 }).notNull(), //unique
 		password: char('password').notNull(),
-		nickname: char('nickname', { length: 20 }).notNull(),
+		nickname: char('nickname', { length: 20 }).notNull(), //unique
 		first_name: char('first_name', { length: 50 }),
 		last_name: char('last_name', { length: 50 }),
 		token: char('token').notNull(),

@@ -5,17 +5,92 @@ import { chatSchema, TNewChats } from '../db/schema/chats';
 import { newUserSchema } from '../db/schema/users';
 import { newParticipantSchema, TNewPartJunct } from '../db/schema/participant_junction';
 import authenticateUser from '../middlewares/authMiddleware';
+import {getUser, getPrivCollocutors} from "../utils/dbConnectRoutesFunctions";
 import handleErrors from "../utils/handleErrors";
 
+export async function initCreateChat (req: Request, res: Response) {
+	try {
+		authenticateUser(req, res, async () => {
+			const { chatName, description, isPrivate, toInviteNick, chatAvatar } = req.body;
+			const userEmail = req.userEmail;
+
+			if (userEmail === undefined) {
+				return res.status(401).json({ error: 'Authentication failed' })
+			}
+
+	//test
+	// const isPrivate = false;
+	// const userEmail = 'example@box'
+	// const chatName = 'strange chat'
+	// const description = 'new way'
+	// const chatAvatar = ''
+	// const toInviteNick = 'uso01'
+
+			const db = await connect()
+
+			const existingChat = await db
+				.select()
+				.from(chatSchema)
+				.where(eq(chatSchema.chat_name, chatName))
+				.execute()
+
+			if (existingChat.length !== 0) {
+				return res.status(400).json({ error: 'Chat with this name already exists' })
+			}
+
+			const user: {userId: number, userNick: string} | null = await getUser(userEmail);
+
+			if (user === null) {
+				return res.status(400).json({ error: 'User not found' })
+			}
+
+			const initUserId: number = user.userId;
+			const initUserNick: string = user.userNick;
+
+			let newChat: TNewChats | undefined = undefined;
+
+			if (!isPrivate) {
+				newChat = await createNewChat(initUserId, isPrivate, chatName, undefined, description, chatAvatar);
+			}
+
+			if (isPrivate && toInviteNick) {
+				const participantUser = await db
+					.select()
+					.from(newUserSchema)
+					.where(eq(newUserSchema.nickname, toInviteNick))
+					.execute();
+		
+				if (participantUser.length === 0) {
+					return res.status(400).json({ error: `No User found with '${toInviteNick}' nickname.` });
+				}
+
+				const toInviteId = participantUser[0].user_id;
+
+				const alreadyExists = await checkPrivateChats(initUserId, toInviteNick);					
+				if (alreadyExists) {
+					return res.status(400).json({ error: `The chat with ${toInviteNick} exists` });
+				}
+				
+				const newChatName = `${initUserNick}-${toInviteNick}`;
+				newChat = await createNewChat(initUserId, isPrivate, newChatName, toInviteId);
+			}
+		
+			return res.status(201).json({newChat});
+		})
+	} catch (error) {
+		handleErrors(error, res, 'createChat')
+	}
+}
+
 async function createNewChat(
-		initUserId: number,
-		isPrivate: boolean, 
-		newChatName: string, 
-		toInviteId?: number, 
-		description?: string, 
-		avatar?: string,
-	) {	
-		try {
+	initUserId: number,
+	isPrivate: boolean, 
+	newChatName: string, 
+	toInviteId?: number, 
+	description?: string, 
+	avatar?: string,
+) {	
+	try {
 		const db = await connect();
 
 		const newChat: TNewChats = {		
@@ -44,138 +119,34 @@ async function createNewChat(
 		
 		if (toInviteId) {
 			const participant_2: TNewPartJunct = {
-			chat_id: chatId,
-			user_id: toInviteId,
+				chat_id: chatId,
+				user_id: toInviteId,
 			};
 			await db.insert(newParticipantSchema).values(participant_2).execute();
 		}
-		return newChat
+
+		return newChat;
 	} catch (error: any) {
 		console.error(`Error in createNewChat: ${error.message}`);
-		throw error;
+		return
 	}
 }
 
-async function checkPrivateChats(initUserId: number, toInviteId: number) {
-    try {
+async function checkPrivateChats(initUserId: number, toInviteNick: string) {
+	try {
 		const db = await connect();
 
-		const initUserchats = await db
-		.select()
-		.from(chatSchema)
-		.innerJoin(newParticipantSchema, eq(newParticipantSchema.chat_id, chatSchema.chat_id))
-		.where(
-			and(
-				eq(chatSchema.is_private, 1),
-				eq(newParticipantSchema.user_id, initUserId))
-		)
-		.execute()
+		const initUserCollocutors = await getPrivCollocutors(initUserId);
 
-		const toInvitechats = await db
-		.select()
-		.from(chatSchema)
-		.innerJoin(newParticipantSchema, eq(newParticipantSchema.chat_id, chatSchema.chat_id))
-		.where(
-			and(
-				eq(chatSchema.is_private, 1),
-				eq(newParticipantSchema.user_id, toInviteId))
-		)
-		.execute()
+		const userExists = initUserCollocutors.some((item) => item && item.user === toInviteNick);
 
-		const initUserArray = initUserchats.map((chat: any) => chat.chats.chat_id)
-		const toInviteArray = toInvitechats.map((chat: any) => chat.chats.chat_id)
-
-		let result
-		for (let id of initUserArray) {
-			if (toInviteArray.includes(id)) {
-				result = id
-				return
-			}
+		if (userExists) {
+			console.log(`You already chat with '${toInviteNick}'.`);
 		}
 
-        return result;
-    } catch (error: any) {
-        console.error(`Error in checkPrivateChats: ${error.message}`);
-        throw error;
-    }
-}
-
-export const createGroupChat = async (req: Request, res: Response) => {
-	try {
-		authenticateUser(req, res, async () => {
-			const { chatName, description, isPrivate, toInviteNick, chatAvatar } = req.body;
-			const userEmail = req.userEmail;
-
-			if (userEmail === undefined) {
-				return res.status(401).json({ error: 'Authentication failed' })
-			}
-
-	//test
-	// const isPrivate = false;
-	// const userEmail = 'example@box'
-	// const chatName = 'strange chat'
-	// const description = 'new way'
-	// const chatAvatar = ''
-	// const toInviteNick = 'uso01'
-
-			const db = await connect()
-
-			const existingChat = await db
-				.select()
-				.from(chatSchema)
-				.where(eq(chatSchema.chat_name, chatName))
-				.execute()
-
-			if (existingChat.length !== 0) {
-			return res.status(400).json({ error: 'Chat with this name already exists' })
-			}
-
-			const user = await db
-				.select()
-				.from(newUserSchema)
-				.where(eq(newUserSchema.email, userEmail))
-				.execute()
-
-			if (user.length === 0) {
-			return res.status(400).json({ error: 'User not found' })
-			}
-
-			const initUserId: number = user[0].user_id;
-			const initUserNick: string = user[0].nickname;
-
-			let newChat;
-
-			if (!isPrivate) {
-				newChat = await createNewChat(initUserId, isPrivate, chatName, undefined, description, chatAvatar);
-			}
-
-			if (isPrivate && toInviteNick) {
-				const participantUser = await db
-					.select()
-					.from(newUserSchema)
-					.where(eq(newUserSchema.nickname, toInviteNick))
-					.execute();
-		
-				if (participantUser.length === 0) {
-					return res.status(400).json({ error: `User with nickname ${toInviteNick} not found` });
-				}
-
-				const toInviteId = participantUser[0].user_id;
-
-				const alreadyExists = await checkPrivateChats(initUserId, toInviteId);					
-				if (alreadyExists) {
-					return res.status(400).json({ error: `The chat with ${toInviteNick} exists` });
-				}
-				
-				const newChatName = `${initUserNick}-${toInviteNick}`;
-				newChat = await createNewChat(initUserId, isPrivate, newChatName, toInviteId);
-			}
-		
-			// return res.status(201).json('Chat successfully created')
-			return res.status(201).json({newChat})
-		})
-	} catch (error) {
-		console.error('Error:', error)
-		res.status(500).send('Internal Server Error')
+		return userExists;
+	} catch (error: any) {
+		console.error(`Error in checkPrivateChats: ${error.message}`);
+		return;
 	}
 }
