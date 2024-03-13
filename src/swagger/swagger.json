@@ -400,7 +400,7 @@
         }
       }
     },
-    "/createChat": {
+    "/chat-create": {
       "post": {
         "tags": ["Chats"],
         "summary": "Create a new group chat",

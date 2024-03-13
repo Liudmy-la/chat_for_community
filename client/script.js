@@ -22,7 +22,7 @@ async function getChatsData (chatId) {
 
 async function getMessageData (chatId) {
 	try {
-		const res = await fetch(`/chat-online?id=${chatId}`, {
+		const res = await fetch(`/chat-conversation?id=${chatId}`, {
 			method: 'GET',
 		});
 		

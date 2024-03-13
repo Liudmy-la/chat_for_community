@@ -1,9 +1,10 @@
-import bcrypt from 'bcrypt'
-import { eq } from 'drizzle-orm'
-import { Request, Response } from 'express'
-import {connect} from '../db/dbConnect'
-import { generateToken } from '../utils/generateToken'
-import { newUserSchema, TNewUser } from '../db/schema/users'
+import bcrypt from 'bcrypt';
+import { eq } from 'drizzle-orm';
+import { Request, Response } from 'express';
+import {connect} from '../db/dbConnect';
+import { generateToken } from '../utils/generateToken';
+import { newUserSchema, TNewUser } from '../db/schema/users';
+import handleErrors from "../utils/handleErrors";
 
 export const registerUser = async (req: Request, res: Response) => {
   try {
@@ -31,7 +32,7 @@ export const registerUser = async (req: Request, res: Response) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
-    const generatedToken = await generateToken({ email })
+    const generatedToken = generateToken({ email })
 
     const newUser: TNewUser = {
       email,
@@ -47,8 +48,8 @@ export const registerUser = async (req: Request, res: Response) => {
 
     return res.status(201).json({ token: generatedToken })
   } catch (error) {
-    console.error('Error:', error)
-    return res.status(500).send('Internal Server Error')
+	handleErrors(error, res, 'registerUser');
+	return;
   }
 }
 
@@ -85,7 +86,7 @@ export const loginUser = async (req: Request, res: Response) => {
 
     return res.status(200).json({ token: newToken })
   } catch (error) {
-    console.error('Error:', error)
-    return res.status(500).send('Internal Server Error')
+	handleErrors(error, res, 'loginUser');
+	return
   }
 }

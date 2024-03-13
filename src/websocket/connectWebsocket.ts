@@ -1,6 +1,6 @@
 import WebSocket from "ws";
 import { Request} from "express";
-import {chatExists, defineUser, checkInDB, updateTime, insertParticipant, insertMessage, getList} from "./dbDataFunctions"
+import {chatExists, defineUser, checkInDB, updateTime, insertParticipant, insertMessage, getWSList} from "../utils/dbConnectWSFunctions";
 
 export interface WebSocketClient extends WebSocket {
 	send: (data: WebSocket.Data) => void;
@@ -16,7 +16,7 @@ const onConnect = () => async (ws: WebSocketClient, req: Request) => {
 		const searchUser = await defineUser(user_email);
 		const user_id: number = searchUser[0].user_id;
 
-		useIncomeData(url, user_id, ws)
+		onIncomeData(url, user_id, ws)
 
 		ws.on('message', onMessage);
 
@@ -25,7 +25,7 @@ const onConnect = () => async (ws: WebSocketClient, req: Request) => {
 	}
 }
 
-async function useIncomeData (url: string, user_id: number, ws: WebSocketClient) {	
+async function onIncomeData (url: string, user_id: number, ws: WebSocketClient) {	
 	try {
 		const connectTime: Date = new Date();
 
@@ -63,7 +63,7 @@ async function useIncomeData (url: string, user_id: number, ws: WebSocketClient)
 			ws.send(JSON.stringify({ text: `Hello! << ${chat_id} >> ` }));
 		}	
 	} catch (error: any) {
-		console.error(`Error useIncomeData : ${error.message}`);
+		console.error(`Error onIncomeData : ${error.message}`);
 	}
 }
 
@@ -73,7 +73,8 @@ const onMessage = (msg: string) => async (user_id: number, chat_id: number, ws: 
 	const newMsg: string = receivedObj.text;
 
 	await insertMessage(user_id, chat_id, newTime, newMsg);
-	const connectedWS = await getList(chat_id);
+
+	const connectedWS = await getWSList(chat_id);
 	const otherParticipants = connectedWS.filter((participant) => participant !== ws);
 
 	const objToSend = {

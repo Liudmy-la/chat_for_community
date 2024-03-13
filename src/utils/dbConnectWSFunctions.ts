@@ -5,7 +5,7 @@ import { chatSchema } from '../db/schema/chats';
 import {newUserSchema} from '../db/schema/users';
 import {newMessageSchema} from '../db/schema/messages';
 import {newParticipantSchema} from '../db/schema/participant_junction';
-import {WebSocketClient} from "./useWebsocket";
+import {WebSocketClient} from "../websocket/connectWebsocket";
 
 export async function chatExists (chatId: number) {
 	const db = await connect();
@@ -73,7 +73,7 @@ export async function insertParticipant (userId: number, chatId: number, timeSta
 	const db = await connect();
 	await db
 		.insert(newParticipantSchema)
-		.values({chat_id: chatId, user_id: userId, connected_at: timeStamp, websocket: ws})
+		.values({chat_id: chatId, user_id: userId, connected_at: timeStamp, websocket: JSON.stringify(ws)})
 		.execute();
 }
 
@@ -85,7 +85,7 @@ export async function insertMessage (userId: number, chatId: number, timeStamp: 
 		.execute();	
 }
 
-export async function getList (chatId: number) {
+export async function getWSList (chatId: number) {
 	const db = await connect()
 	const participantsList = await db
 		.select()
@@ -93,7 +93,13 @@ export async function getList (chatId: number) {
 		.where(eq(newParticipantSchema.chat_id, chatId))
 		.execute()
 	
-		const websocketsArray: any[] = participantsList.map(participant => participant.websocket);
+		const websocketsArray: WebSocketClient[] = participantsList.map(participant => {
+			if (typeof(participant.websocket) === 'string') {
+				return JSON.parse(participant.websocket);
+			} else {
+				throw Error('websocket is unknown')
+			}
+		});
 
 	return websocketsArray
 }

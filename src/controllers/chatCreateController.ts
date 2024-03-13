@@ -5,6 +5,7 @@ import { chatSchema, TNewChats } from '../db/schema/chats';
 import { newUserSchema } from '../db/schema/users';
 import { newParticipantSchema, TNewPartJunct } from '../db/schema/participant_junction';
 import authenticateUser from '../middlewares/authMiddleware';
+import handleErrors from "../utils/handleErrors";
 
 async function createNewChat(
 		initUserId: number,

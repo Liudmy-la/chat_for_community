@@ -12,20 +12,4 @@ export const newParticipantSchema = mysqlTable(
 	},
 );
 
-export type TNewPartJunct = InferModel<typeof newParticipantSchema, 'insert'>
-
-
-// import { InferModel } from 'drizzle-orm';
-// import { pgTable, integer, date, json } from 'drizzle-orm/pg-core';
-
-// export const newParticipantSchema  = pgTable(
-//   'participant__junction',
-//   {
-// 	chat_id: integer('chat_id').notNull(),
-// 	user_id: integer('user_id').notNull(),
-// 	connected_at: date('connected_at'),
-// 	websocket: json("websocket"), // as current sessions
-//   },
-// )
-
-// export type TNewPartJunct = InferModel<typeof newParticipantSchema, 'insert'>
+export type TNewPartJunct = InferModel<typeof newParticipantSchema, 'insert'>;

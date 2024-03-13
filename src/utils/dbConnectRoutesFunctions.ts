@@ -1,11 +1,15 @@
 
 import {connect} from '../db/dbConnect';
-import { desc, eq, and } from 'drizzle-orm';
+import { desc, eq, and, not} from 'drizzle-orm';
 import { chatSchema } from '../db/schema/chats';
 import {newUserSchema} from '../db/schema/users';
 import {newMessageSchema} from '../db/schema/messages';
 import {newParticipantSchema} from '../db/schema/participant_junction';
+import { MySqlInt } from 'drizzle-orm/mysql-core';
 
+function whereIn(chat_id: MySqlInt<{ tableName: "participant__junction"; name: "chat_id"; data: number; driverParam: string | number; hasDefault: false; notNull: true; }>, privChatArray: number[]): import("drizzle-orm").SQL<unknown> | undefined {
+	throw new Error('Function not implemented.');
+}
 
 export async function getChats (isPrivate: boolean, userId: number) {
 	try {
@@ -29,10 +33,10 @@ export async function getChats (isPrivate: boolean, userId: number) {
 	}
 }
 
-export async function getArray (isPrivate: boolean, user: number) {
+export async function getArray (isPrivate: boolean, userId: number) {
 	try {
-		const result = await getChats(isPrivate, user);
-		const chatArray : any[] = result.map(chat => ({id: chat.chats.chat_id, name: chat.chats.chat_name}));
+		const result = await getChats(isPrivate, userId);
+		const chatArray : {id: number, name: string}[] = result.map(chat => ({id: chat.chats.chat_id, name: chat.chats.chat_name}));
 		
 		const uniqueArray = chatArray.filter((obj, index, self) =>
 				index === self.findIndex((t) => (
@@ -56,9 +60,79 @@ export async function getCommonChats () {
 			.where(eq(chatSchema.is_private, 0))
 			.execute()
 		
-		return allChats;
+		
+		const commonArray: {id: number, name: string}[] = allChats.map(chat => ({id: chat.chat_id, name: chat.chat_name}));
+
+		return commonArray;
 	} catch (error: any) {
 		console.error(`Error in getCommonChats: ${error.message}`);
+		throw error;
+	}
+}
+
+export async function allUsers() {
+	try {
+		const db = await connect();
+		const users = await db
+			.select({userId: newUserSchema.user_id, userNic: newUserSchema.nickname})
+			.from(newUserSchema)
+			.execute()
+				
+		return users;
+	} catch (error: any) {
+		console.error(`Error in allUsers: ${error.message}`);
+		throw error;
+	}
+}
+
+export async function chatParticipants(chatId: number) {
+	try {
+		const db = await connect();
+		const users = await db
+			.select({userId: newUserSchema.user_id, userNic: newUserSchema.nickname})
+			.from(newUserSchema)
+			.leftJoin(newParticipantSchema, eq(newParticipantSchema.user_id, newUserSchema.user_id))
+			.where(eq(newParticipantSchema.chat_id, chatId))
+			.execute()
+				
+		return users;
+	} catch (error: any) {
+		console.error(`Error in allUsers: ${error.message}`);
+		throw error;
+	}
+}
+
+
+export async function getPrivCollocutors (userId: number) {
+	try {
+		const result = await getChats(true, userId);
+		const privChatArray : number[] = result.map(
+				chat => chat.chats.chat_id);
+
+		const db = await connect();
+		const allChats = await db
+			.select()
+			.from(newParticipantSchema)
+			.leftJoin(newUserSchema, eq(newUserSchema.user_id, newParticipantSchema.user_id))
+			.where(
+				and(
+					whereIn(newParticipantSchema.chat_id, privChatArray),
+					not(eq(newParticipantSchema.user_id, userId)))
+			)
+			.execute()
+		
+		const allCollocutors = allChats.map(
+				(chat) => {
+					if (chat && chat.users) {
+						return {chatId: chat.participant__junction.chat_id, user: chat.users.nickname}
+					} else {
+						return null
+					}
+				});
+		
+		return allCollocutors;
+	} catch (error: any) {
+		console.error(`Error in getPrivCollocutors: ${error.message}`);
 		throw error;
 	}
 }
@@ -147,3 +221,5 @@ export async function memberDelete (userId: number) {
 		.where(eq(newParticipantSchema.user_id, userId))
 		.execute();
 }
+
+
