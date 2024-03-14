@@ -18,8 +18,8 @@ export async function chatsInfo (req: Request, res: Response) {
 
 			const userId = await getUser(userEmail);
 
-			const privChatArray = await getArray(true, userId);
-			const groupChatArray = await getArray(false, userId);
+			const privChatArray = await getArray(true, Number(userId));
+			const groupChatArray = await getArray(false, Number(userId));
 			
 			const commonChats = await getCommonChats();
 
@@ -59,8 +59,8 @@ export async function usersInfo (req: Request, res: Response) {
 
 			const chatUsers = await chatParticipants(chatId);
 
-			const userId: number = await getUser(userEmail);
-			const allCollocutors: ({chatId: number, user: string} | null)[] = await getPrivCollocutors(userId);
+			const userId = await getUser(userEmail);
+			const allCollocutors: ({chatId: number, user: string} | null)[] = await getPrivCollocutors(Number(userId));
 
 			return res.status(200).json({
 				data: {

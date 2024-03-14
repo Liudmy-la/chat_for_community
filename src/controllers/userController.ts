@@ -7,7 +7,6 @@ import upload from "../helper/multerConfig";
 
 import {connect} from "../db/dbConnect";
 import { newUserSchema } from "../db/schema/users";
-// import { chatSchema } from "../db/schema/chats";
 import authenticateUser from "../middlewares/authMiddleware";
 import handleErrors from "../utils/handleErrors";
 
@@ -50,35 +49,35 @@ export const deleteUser = async (req: Request, res: Response) => {
 		const { password } = req.body;
 
 		authenticateUser(req, res, async () => {
-		const userEmail = req.userEmail;
+			const userEmail = req.userEmail;
 
-		if (userEmail === undefined) {
-			return res.status(401).json({ error: "Invalid or missing user email" });
-		}
+			if (userEmail === undefined) {
+				return res.status(401).json({ error: "Invalid or missing user email" });
+			}
 
-		const db = await connect();
+			const db = await connect();
 
-		const users = await db
-			.select()
-			.from(newUserSchema)
-			.where(eq(newUserSchema.email, userEmail))
-			.execute();
+			const users = await db
+				.select()
+				.from(newUserSchema)
+				.where(eq(newUserSchema.email, userEmail))
+				.execute();
 
-		if (users.length === 0) {
-			return res.status(400).json({ error: "User not found" });
-		}
+			if (users.length === 0) {
+				return res.status(400).json({ error: "User not found" });
+			}
 
-		const storedPassword = users[0].password;
+			const storedPassword = users[0].password;
 
-		const passwordMatch = await bcrypt.compare(password, storedPassword);
+			const passwordMatch = await bcrypt.compare(password, storedPassword);
 
-		if (!passwordMatch) {
-			return res.status(401).json({ error: "Invalid password" });
-		}
+			if (!passwordMatch) {
+				return res.status(401).json({ error: "Invalid password" });
+			}
 
-		await db.delete(newUserSchema).where(eq(newUserSchema.email, userEmail)).execute();
+			await db.delete(newUserSchema).where(eq(newUserSchema.email, userEmail)).execute();
 
-		return res.status(200).json({ message: "User deleted successfully" });
+			return res.status(200).json({ message: "User deleted successfully" });
 		});
 	} catch (error) {
 		handleErrors(error, res, 'deleteUser');
@@ -88,75 +87,75 @@ export const deleteUser = async (req: Request, res: Response) => {
 export const setAvatar = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		authenticateUser(req, res, async () => {
-		const userEmail = req.userEmail;
+			const userEmail = req.userEmail;
 
-		if (userEmail === undefined) {
-			return res.status(401).json({ error: "Invalid or missing user email" });
-		}
-
-		const db = await connect();
-
-		const users = await db
-			.select()
-			.from(newUserSchema)
-			.where(eq(newUserSchema.email, userEmail))
-			.execute();
-
-		if (users.length === 0) {
-			return res.status(400).json({ error: "User not found" });
-		}
-
-		const uploadMiddleware = upload.single("avatar");
-
-		uploadMiddleware(req, res, async function (err) {
-			if (err) {
-			console.error("Multer Error:", err);
-			return res.status(400).json({ error: err.message });
+			if (userEmail === undefined) {
+				return res.status(401).json({ error: "Invalid or missing user email" });
 			}
 
-			const file: any = req.file;
-			if (!file) {
-			return res.status(400).send("No file uploaded.");
+			const db = await connect();
+
+			const users = await db
+				.select()
+				.from(newUserSchema)
+				.where(eq(newUserSchema.email, userEmail))
+				.execute();
+
+			if (users.length === 0) {
+				return res.status(400).json({ error: "User not found" });
 			}
 
-			const allowedExtensions = [".jpg", ".jpeg", ".png"];
-			const fileExtension = "." + (file.originalname.split(".").pop() || "");
+			const uploadMiddleware = upload.single("avatar");
 
-			if (!allowedExtensions.includes(fileExtension.toLowerCase())) {
-			return res
-				.status(400)
-				.send("Invalid file type. Only JPEG, JPG and PNG images are allowed.");
-			}
+			uploadMiddleware(req, res, async function (err) {
+				if (err) {
+					console.error("Multer Error:", err);
+					return res.status(400).json({ error: err.message });
+				}
 
-			if (file.size > 5 * 1024 * 1024) {
-			return res.status(400).send("File size exceeds the limit.");
-			}
+				const file: any = req.file;
+				if (!file) {
+					return res.status(400).send("No file uploaded.");
+				}
 
-			try {
-			const result = await cloudinary.v2.uploader.upload(file.path);
-			fs.unlinkSync(file.path);
+				const allowedExtensions = [".jpg", ".jpeg", ".png"];
+				const fileExtension = "." + (file.originalname.split(".").pop() || "");
 
-			const imageUrl: string = result.secure_url;
+				if (!allowedExtensions.includes(fileExtension.toLowerCase())) {
+					return res
+						.status(400)
+						.send("Invalid file type. Only JPEG, JPG and PNG images are allowed.");
+				}
 
-			const updatedUser = await db
-				.update(newUserSchema)
-				.set({ user_avatar: imageUrl })
-				.where(eq(newUserSchema.email, userEmail));
+				if (file.size > 5 * 1024 * 1024) {
+					return res.status(400).send("File size exceeds the limit.");
+				}
 
-			return updatedUser;
-			} catch (error) {
-			console.error("Cloudinary Error:", error);
-			return res.status(500).send("Error uploading image to Cloudinary.");
-			}
-		});
+				try {
+					const result = await cloudinary.v2.uploader.upload(file.path);
+					fs.unlinkSync(file.path);
 
-		const upratedUser = await db
-			.select()
-			.from(newUserSchema)
-			.where(eq(newUserSchema.email, userEmail))
-			.execute();
+					const imageUrl: string = result.secure_url;
 
-		return res.status(200).send("Avatar changed successfully");
+					const updatedUser = await db
+						.update(newUserSchema)
+						.set({ user_avatar: imageUrl })
+						.where(eq(newUserSchema.email, userEmail));
+
+					return updatedUser;
+				} catch (error) {
+					handleErrors(error, res, 'Uploading image to Cloudinary');
+					return;
+				}
+			});
+
+			// const updatedUser = await db
+			// 	.select()
+			// 	.from(newUserSchema)
+			// 	.where(eq(newUserSchema.email, userEmail))
+			// 	.execute();
+
+			return res.status(200).send("Avatar changed successfully");
 		});
 	} catch (error) {
 		handleErrors(error, res, 'setAvatar');

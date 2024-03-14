@@ -19,12 +19,14 @@ router.get("/profile", userController.getUserProfile);
 
 //message
 router.get("/chat-conversation", chatHistoryController.chatHistoryInfo);
-// router.get("/find", ** findChatByNickname);
-// router.get("/find", ** findChatByText);
+// router.get("/find", ** findChatByNickname & msgs in this chat ); - in a certain group chat or in all-user's list
+// router.get("/find", ** findChatByText  & msgs in this chat); - in a certain chat or in all chats (or choose: only in private - only in group )
+// router.get("/find", ** findChatByText ); - in a all-group-chat list
 
 //chats & participants
 router.post("/chat-create", chatCreateController.initCreateChat);
 router.get("/chat-list", chatListsController.chatsInfo);
 router.get("/user-list", chatListsController.usersInfo);
+// router.delete("/participant",  ** memberDelete); - who push "leave the chat"
 
 export default router;
