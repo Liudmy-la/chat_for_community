@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import authenticateUser from "../middlewares/authMiddleware";
 import handleErrors from "../utils/handleErrors";
-import { getUser } from "utils/dbConnectRoutesFunctions";
+import { getUser } from "utils/dbConnectFunctions";
 
 
 export async function findInChat (req: Request, res: Response) {

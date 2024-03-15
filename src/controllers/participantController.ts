@@ -3,10 +3,10 @@ import authenticateUser from "../middlewares/authMiddleware";
 import handleErrors from "../utils/handleErrors";
 import { WebSocketClient } from "websocket/connectWebsocket";
 import { setWebSocket } from "websocket/setWebSocket";
-import { getUser, memberDelete } from "utils/dbConnectRoutesFunctions";
+import { chatParticipants, getChatData, getUser, memberDelete } from "utils/dbConnectFunctions";
 
 
-export async function isParticipant (ws: WebSocketClient, req: Request, res: Response) {
+export async function openChat (ws: WebSocketClient, req: Request, res: Response) {
     try {
 		authenticateUser(req, res, async () => {
 			// const userEmail = req.userEmail;	
@@ -16,18 +16,28 @@ export async function isParticipant (ws: WebSocketClient, req: Request, res: Res
 				return res.status(401).json({ error: "Invalid or missing user email" });
 			}
 			
-			let chat_id = 102; //from request
-			let is_private = false; //from request
-
+			const chat_id = 102; //from request
+			const is_private = false; //from request
 
 			// NEW WebSocket connection
-			let mywsServer = setWebSocket(chat_id, is_private, userEmail);
+			const myWS: WebSocket | undefined = await setWebSocket(chat_id, is_private, userEmail);
 
+			if (!myWS) {
+				return res.status(500).json({
+					message: `Error establishing connection with <<${chat_id}>>`
+				})
+			}
 
+			const participants: {userId: number, userNic: string}[] = await chatParticipants(chat_id);
 
+			const chatData = await getChatData(Number(chat_id));
 
 			return res.status(200).json({
-				data: {}
+				data: {
+					currentWebsocket: myWS,
+					chatData,
+					participants
+				}
 			})
 		});
 
@@ -36,7 +46,7 @@ export async function isParticipant (ws: WebSocketClient, req: Request, res: Res
     }
 }
 
-export async function deleteParticipant (ws: WebSocketClient, req: Request, res: Response) {
+export async function deleteParticipant (req: Request, res: Response) {
     try {
 		authenticateUser(req, res, async () => {
 			// const userEmail = req.userEmail;	

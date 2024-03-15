@@ -5,11 +5,14 @@ import { chatSchema } from '../db/schema/chats';
 import {newUserSchema} from '../db/schema/users';
 import {newMessageSchema} from '../db/schema/messages';
 import {newParticipantSchema} from '../db/schema/participant_junction';
+import {WebSocketClient} from "../websocket/connectWebsocket";
 import { MySqlInt } from 'drizzle-orm/mysql-core';
 
 function whereIn(chat_id: MySqlInt<{ tableName: "participant__junction"; name: "chat_id"; data: number; driverParam: string | number; hasDefault: false; notNull: true; }>, privChatArray: number[]): import("drizzle-orm").SQL<unknown> | undefined {
 	throw new Error('Function not implemented.');
 }
+
+//find data
 
 export async function getChats (isPrivate: boolean, userId: number) {
 	try {
@@ -97,7 +100,7 @@ export async function chatParticipants(chatId: number) {
 				
 		return chatUsers;
 	} catch (error: any) {
-		console.error(`Error in allUsers: ${error.message}`);
+		console.error(`Error in chatParticipants: ${error.message}`);
 		throw error;
 	}
 }
@@ -147,7 +150,7 @@ export async function getNickname (userId: number) {
 	} catch (error: any) {
 		console.error(`Error in getNickname: ${error.message}`);
 		throw error;
-}
+	}
 }
 
 export async function getUser (email: string) {
@@ -165,6 +168,22 @@ export async function getUser (email: string) {
 		return user.length !== 0 ? {userId: id, userNick: nick} : null;
 	} catch (error: any) {
 		console.error(`Error in getUser: ${error.message}`);
+		throw error;
+	}
+}
+
+export async function getChatData (chatId: number) {
+	try {
+		const db = await connect();
+		const data = await db
+			.select()
+			.from(chatSchema)
+			.where(eq(chatSchema.chat_id, chatId))
+			.execute();
+		
+		return data;
+	} catch (error: any) {
+		console.error(`Error in getChatData: ${error.message}`);
 		throw error;
 	}
 }
@@ -201,7 +220,7 @@ export async function getСonnectTime (chatId: number, userId: number) {
 			)
 			.execute();
 		
-		console.log(`connected user data: `, user)
+	console.log(`connected user data: `, user)
 		
 		const connected = user[0].connected_at
 		return connected ? new Date(connected) : false;
@@ -211,11 +230,77 @@ export async function getСonnectTime (chatId: number, userId: number) {
 	}
 }
 
-export async function memberDelete (userId: number, chatId: number) {
-	const db = await connect();
-	
-	await db
-		.delete(newParticipantSchema)
+export async function getWSList (chatId: number) {
+	try {
+		const db = await connect()
+		const participantsList = await db
+			.select()
+			.from(newParticipantSchema)
+			.where(eq(newParticipantSchema.chat_id, chatId))
+			.execute()
+		
+			const websocketsArray: WebSocketClient[] = participantsList.map(participant => {
+				if (typeof(participant.websocket) === 'string') {
+					return JSON.parse(participant.websocket);
+				} else {
+					throw Error('websocket is unknown')
+				}
+			});
+
+		return websocketsArray
+	} catch (error: any) {
+		console.error(`Error in getWSList: ${error.message}`);
+		throw error;
+	}
+}
+
+// set--update data
+
+export async function isChatExists (chatId: number) {
+	try {
+		const db = await connect();
+
+		const existingChat = await db
+			.select()
+			.from(chatSchema)
+			.where(eq(chatSchema.chat_id, chatId))
+			.execute();
+		
+		return !!existingChat;
+	} catch (error: any) {
+		console.error(`Error in isChatExists: ${error.message}`);
+		throw error;
+	}
+}
+
+export async function checkUserInChat (userId: number, chatId: number) {
+	try {
+		const db = await connect();
+
+		const chatConsist = await db
+			.select()
+			.from(newParticipantSchema)
+			.where(
+				and(
+					eq(newParticipantSchema.user_id, userId),
+					eq(newParticipantSchema.chat_id, chatId))
+			)
+			.execute();
+		
+		return !!chatConsist;
+	} catch (error: any) {
+		console.error(`Error in checkUserInChat: ${error.message}`);
+		throw error;
+	}
+}
+
+export async function updateParticipant (userId: number, chatId: number, timeStamt: Date, ws: WebSocketClient) {
+	try {
+		const db = await connect();
+
+		const pair = await db
+		.select()
+		.from(newParticipantSchema)
 		.where(
 			and(
 				eq(newParticipantSchema.user_id, userId),
@@ -223,15 +308,75 @@ export async function memberDelete (userId: number, chatId: number) {
 		)
 		.execute();
 
-	const checkUser = await db
-	.select()
-	.from(newParticipantSchema)
-	.where(
-		and(
-			eq(newParticipantSchema.user_id, userId),
-			eq(newParticipantSchema.chat_id, chatId))
-	)
-	.execute();
+		const pair_id = pair[0].participant_id
 
-	return checkUser
+		await db
+		.update(newParticipantSchema)
+		.set({connected_at: timeStamt, websocket: ws})
+		.where(eq(newParticipantSchema.participant_id, pair_id))
+		.execute();
+		
+	} catch (error: any) {
+		console.error(`Error in updateParticipant: ${error.message}`);
+		throw error;
+	}
+}
+
+export async function insertParticipant (userId: number, chatId: number, timeStamp: Date, ws: WebSocketClient) {
+	try {
+		const db = await connect();
+		await db
+			.insert(newParticipantSchema)
+			.values({chat_id: chatId, user_id: userId, connected_at: timeStamp, websocket: JSON.stringify(ws)})
+			.execute();
+		
+	} catch (error: any) {
+		console.error(`Error in insertParticipant: ${error.message}`);
+		throw error;
+	}
+}
+
+export async function insertMessage (userId: number, chatId: number, timeStamp: Date, msg: string) {
+	try {
+		const db = await connect();
+		await db
+			.insert(newMessageSchema)
+			.values({chat_id: chatId, user_id: userId, timestamp: timeStamp, message_text: msg})
+			.execute();	
+			
+	} catch (error: any) {
+		console.error(`Error in insertMessage: ${error.message}`);
+		throw error;
+	}
+}
+
+export async function memberDelete (userId: number, chatId: number) {
+	try {
+		const db = await connect();
+		
+		await db
+			.delete(newParticipantSchema)
+			.where(
+				and(
+					eq(newParticipantSchema.user_id, userId),
+					eq(newParticipantSchema.chat_id, chatId))
+			)
+			.execute();
+
+		const checkUser = await db
+		.select()
+		.from(newParticipantSchema)
+		.where(
+			and(
+				eq(newParticipantSchema.user_id, userId),
+				eq(newParticipantSchema.chat_id, chatId))
+		)
+		.execute();
+
+		return checkUser
+				
+	} catch (error: any) {
+		console.error(`Error in memberDelete: ${error.message}`);
+		throw error;
+	}
 }

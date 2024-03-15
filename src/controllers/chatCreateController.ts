@@ -5,7 +5,7 @@ import { chatSchema, TNewChats } from '../db/schema/chats';
 import { newUserSchema } from '../db/schema/users';
 import { newParticipantSchema, TNewPartJunct } from '../db/schema/participant_junction';
 import authenticateUser from '../middlewares/authMiddleware';
-import {getUser, getPrivCollocutors} from "../utils/dbConnectRoutesFunctions";
+import {getUser, getPrivCollocutors} from "../utils/dbConnectFunctions";
 import handleErrors from "../utils/handleErrors";
 
 export async function initCreateChat (req: Request, res: Response) {

@@ -1,95 +1,117 @@
 import WebSocket from "ws";
 import {Request} from "express";
-import {chatExists, defineUser, checkInDB, updateTime, insertParticipant, insertMessage, getWSList} from "../utils/dbConnectWSFunctions";
+import {
+		getUser, isChatExists, checkUserInChat, getWSList, 
+		updateParticipant, insertParticipant, insertMessage
+	} from "utils/dbConnectFunctions";
 
 export interface WebSocketClient extends WebSocket {
 	send: (data: WebSocket.Data) => void;
 	readyState: 0 | 1 | 2 | 3;
 }
 //-----------------------------------------------
-const onConnect = () => async (ws: WebSocketClient, req: Request) => {
+const onConnect = async (ws: WebSocketClient, req: Request) => {
 	try {
 		const url: string = req.url;
 
-		const user_email: string = url.substring(url.indexOf('user-') + 5);
+		const email: string = url.substring(url.indexOf('user-') + 5);
 
-		const searchUser = await defineUser(user_email);
-		const user_id: number = searchUser[0].user_id;
+		const user: {userId: number, userNick: string} | null = await getUser(email);
+		
+		if (user === null) {
+			throw new Error("User not found");
+		}
+	
+		const chatId: number | undefined = await onIncomeData(url, user.userId, ws);
 
-		onIncomeData(url, user_id, ws)
-
-		ws.on('message', onMessage);
+		if (chatId !== undefined) {
+			ws.on('message', (msg: string) => onMessage(msg, user, chatId, ws));
+		}
 
 	} catch (error: any) {
 		console.error(`Error onConnect : ${error.message}`);
 	}
 }
 
-async function onIncomeData (url: string, user_id: number, ws: WebSocketClient) {	
+async function onIncomeData (url: string, userId: number, ws: WebSocketClient): Promise<number | undefined> {	
 	try {
 		const connectTime: Date = new Date();
 
-		let chat_id: number;
-		if (url.startsWith('/group-chat-')) {
-			chat_id = Number(url.substring(12));
+		let chatId: number | undefined;
 
-			const isChat = await chatExists(chat_id);
+		if (url.startsWith('/group-chat-')) {
+			chatId = Number(url.substring(12));
+
+			const isChat = await isChatExists(chatId);
 			if (!isChat) {
 				throw new Error (`This chat doesn't exists`);
 			}
 
-			const chatConsist = await checkInDB(user_id, chat_id);
+			const chatConsist = await checkUserInChat(userId, chatId);
 			if (chatConsist) {
-				await updateTime(user_id, chat_id, connectTime);
+				await updateParticipant(userId, chatId, connectTime, ws);
 			}
 			else {
-				await insertParticipant(user_id, chat_id, connectTime, ws);
+				await insertParticipant(userId, chatId, connectTime, ws);
 			}
 
-			ws.send(JSON.stringify({ text: `Welcome! << ${chat_id} >> ` }));
+			ws.send(JSON.stringify({ text: `Welcome! << ${chatId} >> ` }));
+			
 		} else if (url.startsWith('/priv-chat-')) {
-			chat_id = Number(url.substring(11));
+			chatId = Number(url.substring(11));
 
-			const isChat = await chatExists(chat_id);
+			const isChat = await isChatExists(chatId);
 			if (!isChat) {
 				throw new Error (`This chat doesn't exists`);
 			}
 
-			const chatConsist = await checkInDB(user_id, chat_id);		
+			const chatConsist = await checkUserInChat(userId, chatId);		
 			if (chatConsist) {
-				await updateTime(user_id, chat_id, connectTime);
+				await updateParticipant(userId, chatId, connectTime, ws);
 			}
 
-			ws.send(JSON.stringify({ text: `Hello! << ${chat_id} >> ` }));
+			ws.send(JSON.stringify({ text: `Hello! << ${chatId} >> ` }));
+			
 		}	
+		return chatId;
 	} catch (error: any) {
 		console.error(`Error onIncomeData : ${error.message}`);
+		return;
 	}
 }
 
-const onMessage = (msg: string) => async (user_id: number, chat_id: number, ws: WebSocketClient, msg: string) => {	
-	const receivedObj = JSON.parse(msg);
-	const newTime: Date = receivedObj.timeStamp;
-	const newMsg: string = receivedObj.text;
+const onMessage = async (msg: string, user: { userId: number, userNick: string}, chat: number, ws: WebSocketClient) => {	
+	try {
+		if (user.userId === undefined) {
+			throw new Error("User ID is undefined");
+		}
 
-	ws.readyState === WebSocket.OPEN && await insertMessage(user_id, chat_id, newTime, newMsg);
+		const receivedObj = JSON.parse(msg);
+		const newTime: Date = receivedObj.timeStamp;
+		const newMsg: string = receivedObj.text;
 
-	const connectedWS = await getWSList(chat_id);
-	const otherParticipants = connectedWS.filter((participant) => participant !== ws);
+		ws.readyState === WebSocket.OPEN && await insertMessage(user.userId, chat, newTime, newMsg);
 
-	const objToSend = {
-		text: newMsg,
-		nic: user_id,
-		timeStamp: new Date(),
-	};
+		const connectedWS = await getWSList(chat);
+		const otherParticipants = connectedWS.filter((participant) => participant !== ws);
 
-	otherParticipants.forEach((client) => {
-				if (client.readyState === WebSocket.OPEN) {
-					client.send(JSON.stringify(objToSend));
-				}
-			});
+		const objToSend = {
+			text: newMsg,
+			nic: user.userNick,
+			timeStamp: new Date(),
+		};
 
-	ws.send(JSON.stringify({ text: `sent`,  timeStamp: objToSend.timeStamp}));
+		otherParticipants.forEach((client) => {
+					if (client.readyState === WebSocket.OPEN) {
+						client.send(JSON.stringify(objToSend));
+					}
+				});
+
+		ws.send(JSON.stringify({ text: `sent`,  timeStamp: objToSend.timeStamp}));
+
+	} catch (error: any) {
+		console.error(`Error onMessage : ${error.message}`);
+	}
 }
 //-----------------------------------------------
 

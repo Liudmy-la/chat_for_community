@@ -30,7 +30,7 @@ router.get("/chat-list", chatListsController.chatsInfo);
 router.get("/user-list", chatListsController.usersInfo);
 
 //connection 
-// router.post("/participant", ** setWebSocket ); - who push "join the chat" or who open chat
+router.post("/participant", participantController.openChat ); // who push "join the chat" or who open the chat
 router.delete("/participant",  participantController.deleteParticipant); // who push "leave the chat"
 
 export default router;

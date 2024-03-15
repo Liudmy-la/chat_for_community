@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import {getNickname, getUser, getMessages, getСonnectTime} from "../utils/dbConnectRoutesFunctions";
+import {getNickname, getUser, getMessages, getСonnectTime} from "../utils/dbConnectFunctions";
 import authenticateUser from "../middlewares/authMiddleware";
 import handleErrors from "../utils/handleErrors";
 
@@ -16,14 +16,15 @@ export async function chatHistoryInfo (req: Request, res: Response) {
 				return res.status(401).json({ error: "Invalid or missing user email" });
 			}
 
-			const chatId: any = req.query.id;		
-			const user = await getUser(userEmail);
+			const chatId = req.query.id;
+
+			const user: {userId: number, userNick: string} | null = await getUser(userEmail);
 
 			const userId = user !== null ? user.userId : null
 
-			const messagesInChat = await getMessages (chatId);
+			const messagesInChat = await getMessages (Number(chatId));
 
-			const connectFrom = userId !== null ? await getСonnectTime(chatId, userId) : false;
+			const connectFrom = userId !== null ? await getСonnectTime(Number(chatId), Number(userId)) : false;
 			if (connectFrom === false) {
 				throw Error(`Can't find user connection data. Refresh the page.`)
 			}
@@ -60,5 +61,3 @@ export async function chatHistoryInfo (req: Request, res: Response) {
 		handleErrors(error, res, 'chatHistoryInfo');
     }
 }
-
-// find by text/name/nickame

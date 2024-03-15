@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import {getArray, getCommonChats, getUser, getPrivCollocutors, chatParticipants, allUsers} from "../utils/dbConnectRoutesFunctions";
+import {getArray, getCommonChats, getUser, getPrivCollocutors, chatParticipants, allUsers} from "../utils/dbConnectFunctions";
 import authenticateUser from "../middlewares/authMiddleware";
 import handleErrors from "../utils/handleErrors";
 
