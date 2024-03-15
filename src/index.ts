@@ -22,7 +22,7 @@ app.use("/chat", express.static(path.resolve(__dirname, '../client'), {
 	}
 }));
 
-const port = process.env.PORT || 7001;
+export const port = process.env.PORT || 7001;
 
 const myServer = app.listen(port, () => {
 	console.log(`Server is running on: http://localhost:${port}`)

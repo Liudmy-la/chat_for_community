@@ -73,12 +73,12 @@ export async function getCommonChats () {
 export async function allUsers() {
 	try {
 		const db = await connect();
-		const users = await db
+		const allUsers: {userId: number, userNic: string}[] = await db
 			.select({userId: newUserSchema.user_id, userNic: newUserSchema.nickname})
 			.from(newUserSchema)
 			.execute()
 				
-		return users;
+		return allUsers;
 	} catch (error: any) {
 		console.error(`Error in allUsers: ${error.message}`);
 		throw error;
@@ -88,14 +88,14 @@ export async function allUsers() {
 export async function chatParticipants(chatId: number) {
 	try {
 		const db = await connect();
-		const users = await db
+		const chatUsers = await db
 			.select({userId: newUserSchema.user_id, userNic: newUserSchema.nickname})
 			.from(newUserSchema)
 			.leftJoin(newParticipantSchema, eq(newParticipantSchema.user_id, newUserSchema.user_id))
 			.where(eq(newParticipantSchema.chat_id, chatId))
 			.execute()
 				
-		return users;
+		return chatUsers;
 	} catch (error: any) {
 		console.error(`Error in allUsers: ${error.message}`);
 		throw error;
@@ -211,13 +211,27 @@ export async function getСonnectTime (chatId: number, userId: number) {
 	}
 }
 
-export async function memberDelete (userId: number) {
+export async function memberDelete (userId: number, chatId: number) {
 	const db = await connect();
 	
 	await db
 		.delete(newParticipantSchema)
-		.where(eq(newParticipantSchema.user_id, userId))
+		.where(
+			and(
+				eq(newParticipantSchema.user_id, userId),
+				eq(newParticipantSchema.chat_id, chatId))
+		)
 		.execute();
+
+	const checkUser = await db
+	.select()
+	.from(newParticipantSchema)
+	.where(
+		and(
+			eq(newParticipantSchema.user_id, userId),
+			eq(newParticipantSchema.chat_id, chatId))
+	)
+	.execute();
+
+	return checkUser
 }
-
-

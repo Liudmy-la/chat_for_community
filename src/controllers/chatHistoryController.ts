@@ -17,11 +17,13 @@ export async function chatHistoryInfo (req: Request, res: Response) {
 			}
 
 			const chatId: any = req.query.id;		
-			const userId = await getUser(userEmail);
+			const user = await getUser(userEmail);
+
+			const userId = user !== null ? user.userId : null
 
 			const messagesInChat = await getMessages (chatId);
 
-			const connectFrom = await getСonnectTime(chatId, userId);
+			const connectFrom = userId !== null ? await getСonnectTime(chatId, userId) : false;
 			if (connectFrom === false) {
 				throw Error(`Can't find user connection data. Refresh the page.`)
 			}
@@ -58,3 +60,5 @@ export async function chatHistoryInfo (req: Request, res: Response) {
 		handleErrors(error, res, 'chatHistoryInfo');
     }
 }
+
+// find by text/name/nickame

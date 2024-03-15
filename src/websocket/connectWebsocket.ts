@@ -1,5 +1,5 @@
 import WebSocket from "ws";
-import { Request} from "express";
+import {Request} from "express";
 import {chatExists, defineUser, checkInDB, updateTime, insertParticipant, insertMessage, getWSList} from "../utils/dbConnectWSFunctions";
 
 export interface WebSocketClient extends WebSocket {
@@ -72,7 +72,7 @@ const onMessage = (msg: string) => async (user_id: number, chat_id: number, ws: 
 	const newTime: Date = receivedObj.timeStamp;
 	const newMsg: string = receivedObj.text;
 
-	await insertMessage(user_id, chat_id, newTime, newMsg);
+	ws.readyState === WebSocket.OPEN && await insertMessage(user_id, chat_id, newTime, newMsg);
 
 	const connectedWS = await getWSList(chat_id);
 	const otherParticipants = connectedWS.filter((participant) => participant !== ws);
@@ -87,7 +87,7 @@ const onMessage = (msg: string) => async (user_id: number, chat_id: number, ws: 
 				if (client.readyState === WebSocket.OPEN) {
 					client.send(JSON.stringify(objToSend));
 				}
-			 });
+			});
 
 	ws.send(JSON.stringify({ text: `sent`,  timeStamp: objToSend.timeStamp}));
 }

@@ -1,150 +1,16 @@
-// const { getChatsData, getMessageData } = require("../api");
-
-async function getChatsData (chatId) {
-	try {
-		const res = await fetch(`/chat-list?id=${chatId}`, {
-			method: 'GET',
-		});
-		
-		if (res.ok) {
-			const { data } = await res.json();
-			return data
-		} else {
-			const newRes = document.createElement("h4");
-			newRes.style.color = 'red';
-			newRes.innerText = data.message;
-			myChats.appendChild(newRes);
-		}
-	} catch (error) {
-		console.error(`Error getChatsData : ${error.message}`);
-	}
-}
-
-async function getMessageData (chatId) {
-	try {
-		const res = await fetch(`/chat-conversation?id=${chatId}`, {
-			method: 'GET',
-		});
-		
-		if (res.ok) {
-			const { data } = await res.json();
-			return data.messOfChatName
-		} else {
-			const newRes = document.createElement("h4");
-			newRes.style.color = 'red';
-			newRes.innerText = data.message;
-			myChats.appendChild(newRes);
-		}
-	} catch (error) {
-		console.error(`Error getMessageData : ${error.message}`);
-	}
-}
-//-----------------------------------------------
-
-const port = 'localhost:7001'; // process.env.PORT
-
-let chat_id = '102'; //from backend
-let is_private = false; //from backend
-//-----------------------------------------------
-
-async function checkAuth() {
-	// ... ... ...
-	return true
-}
-
+// Arguments for the setWebSocket function
+const port = 'localhost:7001'; // process.env.PORT 
+let chat_id = '102'; //from request
+let is_private = false; //from request
 const user_email = 'example@box'; // result of authenticateUser
-//-----------------------------------------------
-
-function getWebSocketURL() {
-	const baseUrl = is_private ? `priv-chat-${chat_id}` : `group-chat-${chat_id}`;
-	return `ws://${port}/${baseUrl}/user-${user_email}`;
-}
-
-async function createWebSocket() {	
-	const url = getWebSocketURL();
-
-	const isAuth = await checkAuth();
-	if (!isAuth) return null;
-    	
-	return new WebSocket(url);
-}
-//-----------------------------------------------
-
-const myMessages = document.querySelector("#messages");
-const myInput = document.querySelector("#message");
-const myChats = document.querySelector("#chats");
-const chatTitle = document.querySelector("#chat-title");
-	chatTitle.innerText = `Messages of << ${chat_id} >> Chat`
-
-const groupListBtn = document.querySelector("#group-list");
-const privListBtn = document.querySelector("#priv-list");
-const fullListBtn = document.querySelector("#full-list");
-
-const sendBtn = document.querySelector("#send");
-const closeBtn = document.querySelector("#close");
-const storageBtn = document.querySelector("#storage");
-
-sendBtn.disabled = true;
-closeBtn.disabled = true;
-storageBtn.disabled = true;
 
 //-----------------------------------------------
 
-async function setWebSocket() {
-    const mywsServer = await createWebSocket();
+// Init NEW WebSocket connection / import from "setWebSocket" & change function 'initElements'
+let myWS = setWebSocket();
 
-	if (mywsServer === null) {	
-		if (confirm(`Login\n and Try again.`)) {
-				document.location.assign(`http://localhost:7001/login`);
-			} else {
-				document.location.assign(`http://localhost:7001/`);
-			}; 
-		return;
-	}
-
-    mywsServer.onopen = function() {
-        sendBtn.disabled = false;
-        closeBtn.disabled = false;
-        storageBtn.disabled = false;
-		
-        sendBtn.addEventListener("click", () => sendMessage(mywsServer));
-    };
-
-    mywsServer.onmessage = function(event) {
-        const receivedObj = JSON.parse(event.data);		
-		// when everyone already got your smth
-        msgGeneration(receivedObj, "Income msg");
-    };
-
-	return mywsServer;
-}
-
-async function changeWS(server, chatId, isPrivate) {
-	if (server instanceof WebSocket) {
-		server.close();
-	}
-	
-	myMessages.innerHTML = '';
-	chat_id = chatId;
-	is_private = isPrivate;
-
-	mywsServer = await setWebSocket();
-	chatTitle.innerText = `Messages of ${chat_id} Chat`;
-	
-	return mywsServer;
-}
-
-function exitWebSocket(server) {
-	if (confirm(`Are you sure you want to close this chat?`)) {
-		server.close();
-		sendBtn.disabled = true;
-		closeBtn.disabled = true;
-
-		document.location.assign(`http://localhost:7001/allGroups`);
-	} else return
-}
-
-async function joinedChats (privData) {	
+// Implement an interface (after import other functions: changeWS, exitWebSocket, API functions) 
+async function joinedChats (privData, email, ws) {	
 	try {
 		const data = await getChatsData(chat_id);
 
@@ -160,14 +26,14 @@ async function joinedChats (privData) {
 
 			myChats.appendChild(newChat);
 
-			newChat.addEventListener("click", () => changeWS(mywsServer, ch.id, privData));
+			newChat.addEventListener("click", () => changeWS(ws, ch.id, privData, email));
 		}
 	} catch (error) {
 		console.error(`Error joinedChats : ${error.message}`);
 	}
 }
 
-async function showFullList() {	
+async function showFullList(email, ws) {	
 	try {
 		const data = await getChatsData(chat_id);
 
@@ -181,7 +47,7 @@ async function showFullList() {
 
 			myChats.appendChild(newChat);
 
-			newChat.addEventListener("click", () => changeWS(mywsServer, ch.id, false));
+			newChat.addEventListener("click", () => changeWS(ws, ch.id, false, email));
 		}
 	} catch (error) {
 		console.error(`Error showFullList : ${error.message}`);
@@ -218,6 +84,116 @@ async function showMessages () {
 	}
 }
 
+// Event listeners
+// sendBtn.addEventListener("click", () => sendMessage(myWS));
+closeBtn.addEventListener("click", () => exitWebSocket(myWS));
+groupListBtn.addEventListener("click", () => joinedChats(false, user_email, myWS));
+privListBtn.addEventListener("click", () => joinedChats(true, user_email, myWS));
+fullListBtn.addEventListener("click", () => showFullList(user_email, myWS));
+storageBtn.addEventListener("click", () => showMessages(user_email));
+
+
+// API functions
+async function getChatsData (chatId) {
+	try {
+		const res = await fetch(`/chat-list?id=${chatId}`, {
+			method: 'GET',
+		});
+		
+		if (res.ok) {
+			const { data } = await res.json();
+			return data
+		} else {
+			const newRes = document.createElement("h4");
+			newRes.style.color = 'red';
+			newRes.innerText = data.message;
+			myChats.appendChild(newRes);
+		}
+	} catch (error) {
+		console.error(`Error getChatsData : ${error.message}`);
+	}
+}
+
+async function getMessageData (chatId) {
+	try {
+		const res = await fetch(`/conversation?id=${chatId}`, {
+			method: 'GET',
+		});
+		
+		if (res.ok) {
+			const { data } = await res.json();
+			return data.messOfChatName
+		} else {
+			const newRes = document.createElement("h4");
+			newRes.style.color = 'red';
+			newRes.innerText = data.message;
+			myChats.appendChild(newRes);
+		}
+	} catch (error) {
+		console.error(`Error getMessageData : ${error.message}`);
+	}
+}
+
+//-----------------------------------------------
+
+const myMessages = document.querySelector("#messages");
+const myInput = document.querySelector("#message");
+const myChats = document.querySelector("#chats");
+const chatTitle = document.querySelector("#chat-title");
+	chatTitle.innerText = `Messages of << ${chat_id} >> Chat`
+
+const groupListBtn = document.querySelector("#group-list");
+const privListBtn = document.querySelector("#priv-list");
+const fullListBtn = document.querySelector("#full-list");
+
+const sendBtn = document.querySelector("#send");
+const closeBtn = document.querySelector("#close");
+const storageBtn = document.querySelector("#storage");
+
+sendBtn.disabled = true;
+closeBtn.disabled = true;
+storageBtn.disabled = true;
+//-----------------------------------------------
+
+async function setWebSocket() {
+    const myWS = await createWebSocket();
+
+	if (myWS === null) {	
+		if (confirm(`Login\n and Try again.`)) {
+				document.location.assign(`http://localhost:7001/login`);
+			} else {
+				document.location.assign(`http://localhost:7001/`);
+			}; 
+		return;
+	}
+
+    myWS.onopen = function() {
+        sendBtn.disabled = false;
+        closeBtn.disabled = false;
+        storageBtn.disabled = false;
+		
+        sendBtn.addEventListener("click", () => sendMessage(myWS));
+    };
+
+    myWS.onmessage = function(event) {
+        const receivedObj = JSON.parse(event.data);		
+		// when everyone already got your smth
+        msgGeneration(receivedObj, "Income msg");
+    };
+
+	return myWS;
+}
+
+function getWebSocketURL() {
+	const baseUrl = is_private ? `priv-chat-${chat_id}` : `group-chat-${chat_id}`;
+	return `ws://${port}/${baseUrl}/user-${user_email}`;
+}
+
+async function createWebSocket() {	
+	const url = getWebSocketURL();    	
+	return new WebSocket(url);
+}
+
 function msgGeneration(msg, action) {
 	const newMessage = document.createElement("h5")
 	if (msg.nic && msg.text && msg.timeStamp) {
@@ -236,7 +212,7 @@ function msgGeneration(msg, action) {
 	myMessages.appendChild(newMessage);
 }
 
-function sendMessage(server) {
+function sendMessage(ws) {
 	const obj = {
 		text: myInput.value,
 		nic: 'You',
@@ -244,15 +220,30 @@ function sendMessage(server) {
 	}; 
 	msgGeneration(obj, obj.nic);
 
-	server.send(JSON.stringify(obj));
+	ws.send(JSON.stringify(obj));
 }
-// Event listeners
-// sendBtn.addEventListener("click", () => sendMessage(mywsServer));
-closeBtn.addEventListener("click", () => exitWebSocket(mywsServer));
-groupListBtn.addEventListener("click", () => joinedChats(false));
-privListBtn.addEventListener("click", () => joinedChats(true));
-fullListBtn.addEventListener("click", () => showFullList());
-storageBtn.addEventListener("click", () => showMessages());
 
-// NEW WebSocket connection
-let mywsServer = setWebSocket();
+async function changeWS(ws, chatId, isPrivate, email) {
+	if (ws instanceof WebSocket) {
+		ws.close();
+	}
+	
+	myMessages.innerHTML = '';
+	chat_id = chatId;
+	is_private = isPrivate;
+
+	myWS = await setWebSocket();
+	chatTitle.innerText = `Messages of ${chat_id} Chat`;
+	
+	return myWS;
+}
+
+function exitWebSocket(ws) {
+	if (confirm(`Are you sure you want to close this chat?`)) {
+		ws.close();
+		sendBtn.disabled = true;
+		closeBtn.disabled = true;
+
+		document.location.assign(`http://localhost:7001/allGroups`);
+	} else return
+}
