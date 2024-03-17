@@ -1,4 +1,4 @@
-import { port } from "index";
+import { port } from "../index";
 
 export async function setWebSocket(chatId: number, isPrivate: boolean, email: string) {
 	const htmlElements = initElements();

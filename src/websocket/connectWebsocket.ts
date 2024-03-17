@@ -3,7 +3,7 @@ import {Request} from "express";
 import {
 		getUser, isChatExists, checkUserInChat, getWSList, 
 		updateParticipant, insertParticipant, insertMessage
-	} from "utils/dbConnectFunctions";
+	} from "../utils/dbConnectFunctions";
 
 export interface WebSocketClient extends WebSocket {
 	send: (data: WebSocket.Data) => void;

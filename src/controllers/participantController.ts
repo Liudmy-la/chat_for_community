@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import authenticateUser from "../middlewares/authMiddleware";
 import handleErrors from "../utils/handleErrors";
-import { WebSocketClient } from "websocket/connectWebsocket";
-import { setWebSocket } from "websocket/setWebSocket";
-import { chatParticipants, getChatData, getUser, memberDelete } from "utils/dbConnectFunctions";
+import { WebSocketClient } from "../websocket/connectWebsocket";
+import { setWebSocket } from "../websocket/setWebSocket";
+import { chatParticipants, getChatData, getUser, memberDelete } from "../utils/dbConnectFunctions";
 
 
 export async function openChat (ws: WebSocketClient, req: Request, res: Response) {

@@ -10,6 +10,7 @@ import { newUserSchema } from "../db/schema/users";
 import authenticateUser from "../middlewares/authMiddleware";
 import handleErrors from "../utils/handleErrors";
 
+// change to use with mysql
 cloudinary.v2.config({
 	cloud_name: process.env.CLOUD_NAME,
 	api_key: process.env.CLOUD_API_KEY,
@@ -84,6 +85,7 @@ export const deleteUser = async (req: Request, res: Response) => {
 	}
 };
 
+// change to use with mysql
 export const setAvatar = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		authenticateUser(req, res, async () => {

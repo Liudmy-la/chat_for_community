@@ -13,6 +13,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/", routerAll);
+
 app.use("/api_docs", swaggerRouter);
 
 //--------------------------------------------------------------------------
@@ -22,7 +23,7 @@ app.use("/chat", express.static(path.resolve(__dirname, '../client'), {
 	}
 }));
 
-export const port = process.env.PORT || 7001;
+export const port = process.env.PORT;
 
 const myServer = app.listen(port, () => {
 	console.log(`Server is running on: http://localhost:${port}`)

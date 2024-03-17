@@ -8,7 +8,14 @@ import {newParticipantSchema} from '../db/schema/participant_junction';
 import {WebSocketClient} from "../websocket/connectWebsocket";
 import { MySqlInt } from 'drizzle-orm/mysql-core';
 
-function whereIn(chat_id: MySqlInt<{ tableName: "participant__junction"; name: "chat_id"; data: number; driverParam: string | number; hasDefault: false; notNull: true; }>, privChatArray: number[]): import("drizzle-orm").SQL<unknown> | undefined {
+function whereIn(chat_id: MySqlInt<{ 
+									tableName: "participant__junction"; 
+									name: "chat_id"; 
+									data: number; 
+									driverParam: string | number; 
+									hasDefault: false; 
+									notNull: true; }>, 
+				privChatArray: number[]): import("drizzle-orm").SQL<unknown> | undefined {
 	throw new Error('Function not implemented.');
 }
 
