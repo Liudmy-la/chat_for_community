@@ -4,7 +4,7 @@ import * as authController from "../controllers/authController";
 import * as userController from "../controllers/userController";
 import * as chatCreateController from "../controllers/chatCreateController";
 import * as chatListsController from "../controllers/chatListsController";
-import * as chatHistoryController from "../controllers/chatHistoryController";
+import * as findMessageController from "../controllers/findMessageController";
 import * as participantController from "../controllers/participantController";
 
 const router: Router = express.Router();
@@ -14,15 +14,18 @@ router.post("/register", authController.registerUser);
 router.post("/login", authController.loginUser);
 
 //user
-router.delete("/users", userController.deleteUser);
-router.post("/avatar", userController.setAvatar);
 router.get("/profile", userController.getUserProfile);
+router.delete("/user", userController.deleteUser);
+// router.post("/avatar", userController.setAvatar); // change to use with mysql
 
 //message
-router.get("/conversation", chatHistoryController.chatHistoryInfo);
-// router.get("/find", ** findChatByNickname & msgs in this chat ); - in a certain group chat or in all-user's list
-// router.get("/find", ** findChatByText  & msgs in this chat); - in a certain chat or in all chats (or choose: only in private - only in group )
-// router.get("/find", ** findChatByText ); - in a all-group-chat list
+router.get("/find-message", findMessageController.chatHistory);
+router.get("/find-message", findMessageController.messageInChat); // - in a certain chat * messageByNick & messageByText
+// router.get("/find-message", findMessageController.messageInList); // - in all joined chats (or choose: only in private / only in group )
+
+// router.get("/find-chat", ** groupByCaption ); // in titles + descriptions of all-common-group-chat list 
+// router.get("/find-chat", ** joinedGroupByCaption ); // in titles + descriptions of all joined group chats or of all OWN groups 
+// router.get("/find-chat", ** chatByNickname); // - in private joined chats
 
 //chats & participants
 router.post("/chat-create", chatCreateController.initCreateChat);

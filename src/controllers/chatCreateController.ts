@@ -5,7 +5,7 @@ import { chatSchema, TNewChats } from '../db/schema/chats';
 import { newUserSchema } from '../db/schema/users';
 import { newParticipantSchema, TNewPartJunct } from '../db/schema/participant_junction';
 import authenticateUser from '../middlewares/authMiddleware';
-import {getUser, getPrivCollocutors} from "../utils/dbConnectFunctions";
+import {getUser, getPrivCompanions} from "../utils/dbConnectFunctions";
 import handleErrors from "../utils/handleErrors";
 
 export async function initCreateChat (req: Request, res: Response) {
@@ -136,9 +136,9 @@ async function checkPrivateChats(initUserId: number, toInviteNick: string) {
 	try {
 		const db = await connect();
 
-		const initUserCollocutors = await getPrivCollocutors(initUserId);
+		const initUserCompanions = await getPrivCompanions(initUserId);
 
-		const userExists = initUserCollocutors.some((item) => item && item.user === toInviteNick);
+		const userExists = initUserCompanions.some((item) => item && item.user === toInviteNick);
 
 		if (userExists) {
 			console.log(`You already chat with '${toInviteNick}'.`);

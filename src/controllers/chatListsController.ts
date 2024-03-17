@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import {getArray, getCommonChats, getUser, getPrivCollocutors, chatParticipants, allUsers} from "../utils/dbConnectFunctions";
+import {getArray, getCommonChats, getUser, getPrivCompanions, chatParticipants, allUsers} from "../utils/dbConnectFunctions";
 import authenticateUser from "../middlewares/authMiddleware";
 import handleErrors from "../utils/handleErrors";
 
@@ -60,13 +60,13 @@ export async function usersInfo (req: Request, res: Response) {
 			const chatUsers = await chatParticipants(chatId);
 
 			const userId = await getUser(userEmail);
-			const allCollocutors: ({chatId: number, user: string} | null)[] = await getPrivCollocutors(Number(userId));
+			const allCompanions: ({chatId: number, user: string} | null)[] = await getPrivCompanions(Number(userId));
 
 			return res.status(200).json({
 				data: {
 					allAppUsers,
 					chatUsers,
-					allCollocutors
+					allCompanions
 				}
 			})
 

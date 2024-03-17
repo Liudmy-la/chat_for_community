@@ -116,13 +116,13 @@ async function getChatsData (chatId) {
 
 async function getMessageData (chatId) {
 	try {
-		const res = await fetch(`/conversation?id=${chatId}`, {
+		const res = await fetch(`/find-message?id=${chatId}`, {
 			method: 'GET',
 		});
 		
 		if (res.ok) {
 			const { data } = await res.json();
-			return data.messOfChatName
+			return data.messagesOfChat
 		} else {
 			const newRes = document.createElement("h4");
 			newRes.style.color = 'red';

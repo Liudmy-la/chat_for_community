@@ -19,7 +19,7 @@ function whereIn(chat_id: MySqlInt<{
 	throw new Error('Function not implemented.');
 }
 
-//find data
+// find--analyse data
 
 export async function getChats (isPrivate: boolean, userId: number) {
 	try {
@@ -112,7 +112,7 @@ export async function chatParticipants(chatId: number) {
 	}
 }
 
-export async function getPrivCollocutors (userId: number) {
+export async function getPrivCompanions (userId: number) {
 	try {
 		const result = await getChats(true, userId);
 		const privChatArray : number[] = result.map(chat => chat.chats.chat_id);
@@ -129,16 +129,16 @@ export async function getPrivCollocutors (userId: number) {
 			)
 			.execute()
 		
-		const allCollocutors = allChats
+		const allCompanions = allChats
 			.map((chat) => 
 				chat && chat.users 
 				&& {chatId: chat.participant__junction.chat_id, user: chat.users.nickname}			
 			)
 			.filter(Boolean);
 		
-		return allCollocutors;
+		return allCompanions;
 	} catch (error: any) {
-		console.error(`Error in getPrivCollocutors: ${error.message}`);
+		console.error(`Error in getPrivCompanions: ${error.message}`);
 		throw error;
 	}
 }
@@ -195,7 +195,7 @@ export async function getChatData (chatId: number) {
 	}
 }
 
-export async function getMessages (chatId: number) {
+export async function getMessages (chatId: number, limit: number) {
 	try {
 		const db = await connect();
 		const messagesInChat = await db
@@ -203,15 +203,31 @@ export async function getMessages (chatId: number) {
 			.from(newMessageSchema)
 			.where(eq(newMessageSchema.chat_id, chatId))
 			.orderBy(desc(newMessageSchema.timestamp))
-			.limit(8)
+			.limit(limit)
 			.execute();
 			
-		return messagesInChat;
+		const chatsHistory: {id: number, text: string, timeStamp: Date, sender: string, chat: number} [] = [];
+		
+		for (const msg of messagesInChat) {
+				const message = {
+					id: msg.message_id,
+					text: msg.message_text,
+					timeStamp: msg.timestamp,
+					sender: await getNickname(msg.user_id),
+					chat: msg.chat_id
+				}
+
+				chatsHistory.push(message);
+			};
+			
+		return chatsHistory;
 	} catch (error: any) {
 		console.error(`Error in getMessages: ${error.message}`);
 		throw error;
 	}
 }
+
+
 
 export async function getСonnectTime (chatId: number, userId: number) {
 	try {
