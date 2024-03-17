@@ -1,5 +1,6 @@
 .env
 .serverless
+client
 dist
 script.txt
 node_modules

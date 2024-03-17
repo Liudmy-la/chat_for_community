@@ -1,6 +1,6 @@
 
 import {connect} from '../db/dbConnect';
-import { desc, eq, and, not} from 'drizzle-orm';
+import { desc, eq, and, not, like} from 'drizzle-orm';
 import { chatSchema } from '../db/schema/chats';
 import {newUserSchema} from '../db/schema/users';
 import {newMessageSchema} from '../db/schema/messages';
@@ -39,24 +39,6 @@ export async function getChats (isPrivate: boolean, userId: number) {
 		return allChats;
 	} catch (error: any) {
 		console.error(`Error in getChats: ${error.message}`);
-		throw error;
-	}
-}
-
-export async function getArray (isPrivate: boolean, userId: number) {
-	try {
-		const result = await getChats(isPrivate, userId);
-		const chatArray : {id: number, name: string}[] = result.map(chat => ({id: chat.chats.chat_id, name: chat.chats.chat_name}));
-		
-		const uniqueArray = chatArray.filter((obj, index, self) =>
-				index === self.findIndex((t) => (
-				t.id === obj.id
-			))
-		);
-		
-		return uniqueArray
-	} catch (error: any) {
-		console.error(`Error in getArray: ${error.message}`);
 		throw error;
 	}
 }
@@ -188,37 +170,25 @@ export async function getChatData (chatId: number) {
 			.where(eq(chatSchema.chat_id, chatId))
 			.execute();
 		
-		return data;
+		return data[0];
 	} catch (error: any) {
 		console.error(`Error in getChatData: ${error.message}`);
 		throw error;
 	}
 }
 
-export async function getMessages (chatId: number, limit: number) {
+export async function getPreviousMessages (chatId: number) {
 	try {
 		const db = await connect();
+
 		const messagesInChat = await db
 			.select()
 			.from(newMessageSchema)
 			.where(eq(newMessageSchema.chat_id, chatId))
 			.orderBy(desc(newMessageSchema.timestamp))
-			.limit(limit)
 			.execute();
 			
-		const chatsHistory: {id: number, text: string, timeStamp: Date, sender: string, chat: number} [] = [];
-		
-		for (const msg of messagesInChat) {
-				const message = {
-					id: msg.message_id,
-					text: msg.message_text,
-					timeStamp: msg.timestamp,
-					sender: await getNickname(msg.user_id),
-					chat: msg.chat_id
-				}
-
-				chatsHistory.push(message);
-			};
+		const chatsHistory = await refineHistoryData(messagesInChat);
 			
 		return chatsHistory;
 	} catch (error: any) {
@@ -227,7 +197,78 @@ export async function getMessages (chatId: number, limit: number) {
 	}
 }
 
+export async function messagesInsideByText (db: any, chatId: number, text: string) {
+	try {
+		const messagesInChat = await db
+			.select()
+			.from(newMessageSchema)
+			.where(
+				and(
+					eq(newMessageSchema.chat_id, chatId),
+					like(newMessageSchema.message_text, `%${text}%`)
+				))
+			.orderBy(desc(newMessageSchema.timestamp))
+			.execute();
+			
+		
+		const chatsHistory = await refineHistoryData(messagesInChat);
+						
+		return chatsHistory;
+	} catch (error: any) {
+		console.error(`Error in searchMessages: ${error.message}`);
+		throw error;
+	}
+}
 
+export async function messagesInsideByNick (db: any, chatId: number, sender: string) {
+	try {
+		const messagesInChat = await db
+			.select()
+			.from(newMessageSchema)
+			.where(
+				and(
+					eq(newMessageSchema.chat_id, chatId),
+					like(newMessageSchema.user_id, `%${sender}%`)
+				))
+			.orderBy(desc(newMessageSchema.timestamp))
+			.execute();
+			
+		
+		const chatsHistory = await refineHistoryData(messagesInChat);
+						
+		return chatsHistory;
+	} catch (error: any) {
+		console.error(`Error in searchMessages: ${error.message}`);
+		throw error;
+	}
+}
+
+// export async function searchMessages(userId: number, field: 'all' | 'private' | 'group', chunk: string) {
+// 	const db = await connect();
+
+// 	let chatCondition: SQL<unknown> = not(eq(1, 0));
+
+// 	if (field === 'private') {
+// 		chatCondition = and(chatCondition, eq(newMessageSchema.is_private, 1));
+// 	} else if (field === 'group') {
+// 		chatCondition = and(chatCondition, eq(newMessageSchema.is_private, 0));
+// 	}
+
+// 	const messages = await db
+// 		.select()
+// 		.from(newMessageSchema)
+// 		.leftJoin(newParticipantSchema, eq(newMessageSchema.chat_id, newParticipantSchema.chat_id))
+// 		.where(
+// 			and(
+// 				chatCondition,
+// 				like(newMessageSchema.message_text, `%${chunk}%`)
+// 			)
+// 		)
+// 		.orderBy(desc(newMessageSchema.timestamp))
+// 		.execute();
+
+// 	return messages;
+// }
 
 export async function getСonnectTime (chatId: number, userId: number) {
 	try {
@@ -296,6 +337,8 @@ export async function isChatExists (chatId: number) {
 	}
 }
 
+// deleteChat -> if you are sender or admin
+
 export async function checkUserInChat (userId: number, chatId: number) {
 	try {
 		const db = await connect();
@@ -359,20 +402,6 @@ export async function insertParticipant (userId: number, chatId: number, timeSta
 	}
 }
 
-export async function insertMessage (userId: number, chatId: number, timeStamp: Date, msg: string) {
-	try {
-		const db = await connect();
-		await db
-			.insert(newMessageSchema)
-			.values({chat_id: chatId, user_id: userId, timestamp: timeStamp, message_text: msg})
-			.execute();	
-			
-	} catch (error: any) {
-		console.error(`Error in insertMessage: ${error.message}`);
-		throw error;
-	}
-}
-
 export async function memberDelete (userId: number, chatId: number) {
 	try {
 		const db = await connect();
@@ -400,6 +429,89 @@ export async function memberDelete (userId: number, chatId: number) {
 				
 	} catch (error: any) {
 		console.error(`Error in memberDelete: ${error.message}`);
+		throw error;
+	}
+}
+
+export async function insertMessage (userId: number, chatId: number, timeStamp: Date, msg: string) {
+	try {
+		const db = await connect();
+		await db
+			.insert(newMessageSchema)
+			.values({chat_id: chatId, user_id: userId, timestamp: timeStamp, message_text: msg})
+			.execute();	
+			
+	} catch (error: any) {
+		console.error(`Error in insertMessage: ${error.message}`);
+		throw error;
+	}
+}
+
+// updateMessage  -> if you are sender
+// deleteMessage ->  if you are sender or admin
+
+
+// utility fncts
+
+
+export async function getArray (isPrivate: boolean, userId: number) {
+	try {
+		const result = await getChats(isPrivate, userId);
+
+		const chatArray : {id: number, name: string}[] = result.map(
+				chat => ({id: chat.chats.chat_id, name: chat.chats.chat_name})
+			);
+		
+		const uniqueArray = chatArray.filter((obj, index, self) =>
+				index === self.findIndex((t) => (
+				t.id === obj.id
+			))
+		);
+		
+		return uniqueArray
+	} catch (error: any) {
+		console.error(`Error in getArray: ${error.message}`);
+		throw error;
+	}
+}
+
+export async function refineHistoryData (array: {
+			message_id: number,
+			chat_id: number,
+			user_id: number,
+			message_text: string,
+			timestamp: Date,
+		}[] ) {
+	try {
+		const chatHistory: {
+				id: number, 
+				text: string, 
+				timeStamp: Date, 
+				sender: string, 
+				chat: {chatId: number, chatName: string}
+			} [] = [];
+		
+		for (const msg of array) {
+			const sender = await getNickname(msg.user_id);
+			const chat = await getChatData(msg.chat_id);
+			if(!chat) {
+				throw Error (`Can't get chat data.`)
+			}
+
+			const message = {
+				id: msg.message_id,
+				text: msg.message_text,
+				timeStamp: msg.timestamp,
+				sender: sender,
+				chat: {chatId: chat.chat_id, chatName: chat.chat_name || ''}
+			}
+
+			chatHistory.push(message);
+		};
+			
+		return chatHistory;
+	} catch (error: any) {
+		console.error(`Error in refineDate: ${error.message}`);
 		throw error;
 	}
 }

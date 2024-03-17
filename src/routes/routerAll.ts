@@ -20,7 +20,7 @@ router.delete("/user", userController.deleteUser);
 
 //message
 router.get("/find-message", findMessageController.chatHistory);
-router.get("/find-message", findMessageController.messageInChat); // - in a certain chat * messageByNick & messageByText
+router.get("/find-message", findMessageController.messageInChat);
 // router.get("/find-message", findMessageController.messageInList); // - in all joined chats (or choose: only in private / only in group )
 
 // router.get("/find-chat", ** groupByCaption ); // in titles + descriptions of all-common-group-chat list 
