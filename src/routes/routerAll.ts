@@ -8,7 +8,6 @@ import * as findMessageController from "../controllers/findMessageController";
 import * as participantController from "../controllers/participantController";
 import * as findChatController from "../controllers/findChatController";
 
-
 const router: Router = express.Router();
 
 //auth
@@ -20,11 +19,12 @@ router.get("/profile", userController.getUserProfile);
 router.delete("/user", userController.deleteUser);
 // router.post("/avatar", userController.setAvatar); // change to use with mysql
 
-//message
+//find message
 router.get("/find-message", findMessageController.chatHistory);
 router.get("/find-message", findMessageController.messageInChat);
 router.get("/find-message", findMessageController.messageInList); // - in joined chats (need to choose: only in private / only in group )
 
+//find chat ***** + add option to search in some topics
 // router.get("/find-chat", ** groupByCaption ); // in titles + descriptions of all-common-group-chat list 
 // router.get("/find-chat", ** joinedGroupByCaption ); // in titles + descriptions of all joined group chats or of all OWN groups 
 router.get("/find-chat", findChatController.chatByNickname); // - in private joined chats

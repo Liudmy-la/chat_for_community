@@ -1,41 +1,11 @@
-async function getChatsData (chatId) {
-	try {
-		const res = await fetch(`/chat-list?id=${chatId}`, {
-			method: 'GET',
-		});
-		
-		if (res.ok) {
-			const { data } = await res.json();
-			return data
-		} else {
-			const newRes = document.createElement("h4");
-			newRes.style.color = 'red';
-			newRes.innerText = data.message;
-			myChats.appendChild(newRes);
-		}
-	} catch (error) {
-		console.error(`Error getChatsData : ${error.message}`);
-	}
-};
+// Travel Chat Main Page
+// > display the list of all common _Group Chats_
+// > display the list of all _Own Chats_ you have joined
+// > display the list of all you private chats - _Private Messages_
 
-async function getMessageData (chatId) {
-	try {
-		const res = await fetch(`/find-message?id=${chatId}`, {
-			method: 'GET',
-		});
-		
-		if (res.ok) {
-			const { data } = await res.json();
-			return data.messagesOfChat
-		} else {
-			const newRes = document.createElement("h4");
-			newRes.style.color = 'red';
-			newRes.innerText = data.message;
-			myChats.appendChild(newRes);
-		}
-	} catch (error) {
-		console.error(`Error getMessageData : ${error.message}`);
-	}
-};
+// Search By Chat
+// > * ->  option to choose some topics
 
-module.exports = {getChatsData, getMessageData}
+// Create Chat
+// > create new group chat * -> option to send invitations
+// > start new private conversation * -> user will recieve notification with the invite

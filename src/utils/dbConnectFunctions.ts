@@ -459,7 +459,6 @@ export async function insertMessage (userId: number, chatId: number, timeStamp: 
 
 // utility fncts
 
-
 export async function getArray (isPrivate: boolean, userId: number) {
 	try {
 		const result = await getChats(isPrivate, userId);
