@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import authenticateUser from "../middlewares/authMiddleware";
 import handleErrors from "../utils/handleErrors";
 import {connect} from '../db/dbConnect';
-import {getUser, getPreviousMessages, getСonnectTime, messagesInsideByText, messagesInsideByNick} from "../utils/dbConnectFunctions";
+import {getUser, getPreviousMessages, getСonnectTime, messagesInsideByChunk, searchMessagesByChunk} from "../utils/dbConnectFunctions";
 import {truncateArray} from "../utils/truncateArray";
 
 async function fetchData(func: Function, args: any[]) {
@@ -84,41 +84,19 @@ export async function messageInChat (req: Request, res: Response) {
 
 			const numberToDisplay = 10 // from request: initially ask 10 items, "show more" ask "previos_amount +10"
 
-			const textToFind = ("string from request").trim(); // from request body: part of text
-			const userToFind =  ("string from request").trim(); // from request body: part of nickName
+			const findBy: 'text' | 'user' = req.body.option  // from request body: 'text' or 'user'
+			const chunkToFind = ("string from request").trim(); // from request body: part of text or nickName
 			
-			// const messagesWithText = 
-			// 	!!textToFind 
-			// 	&& textToFind.length !== 0 
-			// 	&& (await fetchData(messagesInsideByText, [Number(chatId), textToFind]));
-			// 		const lastElementsByText = 
-			// 			messagesWithText !== false 
-			// 			&& truncateArray(messagesWithText, numberToDisplay);
+			const messagesWithChunk = 
+				(!!chunkToFind && chunkToFind.length !== 0) 
+					? await fetchData(messagesInsideByChunk, [Number(chatId), findBy, chunkToFind]) 
+					: false ;
 
-			// const messagesFromSender = 
-			// 	!!userToFind 
-			// 	&& userToFind.length !== 0 
-			// 	&& (await fetchData(messagesInsideByNick, [Number(chatId), userToFind]));
-			// 		const lastElementsByNick = 
-			// 			messagesFromSender !== false 
-			// 			&& truncateArray(messagesFromSender, numberToDisplay);
-
-			const [messagesWithText, messagesFromSender] = await Promise.all([
-				(!!textToFind && textToFind.length !== 0) 
-					? fetchData(messagesInsideByText, [Number(chatId), textToFind]) 
-					: false,
-				(!!userToFind && userToFind.length !== 0) 
-					? fetchData(messagesInsideByNick, [Number(chatId), userToFind])
-					: false
-			]);
-
-			const lastElementsByText = await getLastElements(messagesWithText, numberToDisplay);
-			const lastElementsByNick = await getLastElements(messagesFromSender, numberToDisplay);
+			const lastElementsByChunk = await getLastElements(messagesWithChunk, numberToDisplay);
 			
 			return res.status(200).json({
 				data: {
-					messageByNick: messagesFromSender || null,
-					messageByText: lastElementsByText || null
+					messageByText: lastElementsByChunk,
 				}
 			})
 		});
@@ -132,48 +110,34 @@ export async function messageInList (req: Request, res: Response) {
     try {
 		authenticateUser(req, res, async () => {
 			// const userEmail = req.userEmail;	
-			const userEmail: string = 'example@box'; // result of authenticateUser
-			
+			const userEmail: string = 'example@box'; // result of authenticateUser			
 			if (userEmail === undefined) {
 				return res.status(401).json({ error: "Invalid or missing user email" });
 			}
+			
+			const user: {userId: number, userNick: string} | null = await getUser(userEmail);
+			if (user === null) {
+				return res.status(401).json({ error: `Can't find user data.` });
+			};
+
+			const userId = user.userId;
 						
-			const numberToDisplay = 10 // from request: initially ask 10 items, "show more" ask "previos_amount +10"
+			const numberToDisplay = 20 // from request: initially ask 10 items, "show more" ask "previos_amount +10"
+			const findBy: 'text' | 'user' = req.body.option_1  // from request body: 'text' or 'user'
+			const findAmong: 'groupJoinedChats' | 'privateJoinedChats' = req.body.option_2 // from request body: groupJoinedChats, privateJoinedChats
 
-			const textToFind = ("string from request").trim(); // from request body: part of text
-			const userToFind = ("string from request").trim(); // from request body: part of nickName
-			
-			const findAmong = '' // from request body: allJoinedChats, groupJoinedChats, privateJoinedChats
+			const chunkToFind = ("string from request").trim(); // from request body: part of text or nickName
 
+			const messagesWithChunk = 
+			(!!chunkToFind && chunkToFind.length !== 0) 
+				? await fetchData(searchMessagesByChunk, [Number(userId), findBy, findAmong, chunkToFind]) 
+				: false ;
 
-
-			// const [messagesWithText, messagesFromSender] = await Promise.all([
-			// 	(!!textToFind && textToFind.length !== 0) 
-			// 		? fetchData(messagesInsideByText, [Number(chatId), textToFind]) 
-			// 		: false,
-			// 	(!!userToFind && userToFind.length !== 0) 
-			// 		? fetchData(messagesInsideByNick, [Number(chatId), userToFind])
-			// 		: false
-			// ]);
-
-			// const lastElementsByText = await getLastElements(messagesWithText, numberToDisplay);
-			// const lastElementsByNick = await getLastElements(messagesFromSender, numberToDisplay);
-			
+			const lastElementsByChunk = await getLastElements(messagesWithChunk, numberToDisplay);	
 
 			return res.status(200).json({
 				data: {
-					// allJoinedChats: {
-					// 	allMessageByNick,
-					// 	allMessageByText
-					// },
-					// groupJoinedChats: {
-					// 	groupMessageByNick,
-					// 	groupMessageByText
-					// },
-					// privateJoinedChats: {
-					// 	privateMessageByNick,
-					// 	privateMessageByText
-					// },
+					messageByText: lastElementsByChunk,
 				}
 			})
 		});

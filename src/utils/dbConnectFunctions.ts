@@ -6,17 +6,9 @@ import {newUserSchema} from '../db/schema/users';
 import {newMessageSchema} from '../db/schema/messages';
 import {newParticipantSchema} from '../db/schema/participant_junction';
 import {WebSocketClient} from "../websocket/connectWebsocket";
-import { MySqlInt } from 'drizzle-orm/mysql-core';
 
-function whereIn(chat_id: MySqlInt<{ 
-									tableName: "participant__junction"; 
-									name: "chat_id"; 
-									data: number; 
-									driverParam: string | number; 
-									hasDefault: false; 
-									notNull: true; }>, 
-				privChatArray: number[]): import("drizzle-orm").SQL<unknown> | undefined {
-	throw new Error('Function not implemented.');
+function whereIn(column: any, values: any[]): any {
+    return column.in(values);
 }
 
 // find--analyse data
@@ -197,15 +189,17 @@ export async function getPreviousMessages (chatId: number) {
 	}
 }
 
-export async function messagesInsideByText (db: any, chatId: number, text: string) {
+export async function messagesInsideByChunk (db: any, chatId: number, findBy: 'text' | 'user', chunk: string) {
 	try {
+		const toCompare = findBy === 'text' ? newMessageSchema.message_text : newMessageSchema.user_id
+
 		const messagesInChat = await db
 			.select()
 			.from(newMessageSchema)
 			.where(
 				and(
 					eq(newMessageSchema.chat_id, chatId),
-					like(newMessageSchema.message_text, `%${text}%`)
+					like(toCompare, `%${chunk}%`)
 				))
 			.orderBy(desc(newMessageSchema.timestamp))
 			.execute();
@@ -220,55 +214,33 @@ export async function messagesInsideByText (db: any, chatId: number, text: strin
 	}
 }
 
-export async function messagesInsideByNick (db: any, chatId: number, sender: string) {
-	try {
-		const messagesInChat = await db
-			.select()
-			.from(newMessageSchema)
-			.where(
-				and(
-					eq(newMessageSchema.chat_id, chatId),
-					like(newMessageSchema.user_id, `%${sender}%`)
-				))
-			.orderBy(desc(newMessageSchema.timestamp))
-			.execute();
-			
-		
-		const chatsHistory = await refineHistoryData(messagesInChat);
-						
-		return chatsHistory;
-	} catch (error: any) {
-		console.error(`Error in searchMessages: ${error.message}`);
-		throw error;
-	}
+export async function searchMessagesByChunk(
+			db: any, 
+			userId: number, 
+			findBy: 'text' | 'user', 
+			findAmong: 'groupJoinedChats' | 'privateJoinedChats', 
+			chunk: string
+		) {
+	const isPrivate = findAmong === 'groupJoinedChats' ? false : true
+	
+	const result = await getChats(isPrivate, userId);
+	const chatArray : number[] = result.map(chat => chat.chats.chat_id);
+	
+	const toCompare = findBy === 'text' ? newMessageSchema.message_text : newMessageSchema.user_id
+
+	const messages = await db
+		.select()
+		.from(newMessageSchema)
+		.where(
+			and(
+				whereIn(newMessageSchema.chat_id, chatArray),
+				like(toCompare, `%${chunk}%`)
+			))
+		.orderBy(desc(newMessageSchema.timestamp))
+		.execute();
+
+	return messages;
 }
-
-// export async function searchMessages(userId: number, field: 'all' | 'private' | 'group', chunk: string) {
-// 	const db = await connect();
-
-// 	let chatCondition: SQL<unknown> = not(eq(1, 0));
-
-// 	if (field === 'private') {
-// 		chatCondition = and(chatCondition, eq(newMessageSchema.is_private, 1));
-// 	} else if (field === 'group') {
-// 		chatCondition = and(chatCondition, eq(newMessageSchema.is_private, 0));
-// 	}
-
-// 	const messages = await db
-// 		.select()
-// 		.from(newMessageSchema)
-// 		.leftJoin(newParticipantSchema, eq(newMessageSchema.chat_id, newParticipantSchema.chat_id))
-// 		.where(
-// 			and(
-// 				chatCondition,
-// 				like(newMessageSchema.message_text, `%${chunk}%`)
-// 			)
-// 		)
-// 		.orderBy(desc(newMessageSchema.timestamp))
-// 		.execute();
-
-// 	return messages;
-// }
 
 export async function getСonnectTime (chatId: number, userId: number) {
 	try {
