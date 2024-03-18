@@ -6,6 +6,8 @@ import * as chatCreateController from "../controllers/chatCreateController";
 import * as chatListsController from "../controllers/chatListsController";
 import * as findMessageController from "../controllers/findMessageController";
 import * as participantController from "../controllers/participantController";
+import * as findChatController from "../controllers/findChatController";
+
 
 const router: Router = express.Router();
 
@@ -25,7 +27,7 @@ router.get("/find-message", findMessageController.messageInList); // - in joined
 
 // router.get("/find-chat", ** groupByCaption ); // in titles + descriptions of all-common-group-chat list 
 // router.get("/find-chat", ** joinedGroupByCaption ); // in titles + descriptions of all joined group chats or of all OWN groups 
-// router.get("/find-chat", ** chatByNickname); // - in private joined chats
+router.get("/find-chat", findChatController.chatByNickname); // - in private joined chats
 
 //chats & participants
 router.post("/chat-create", chatCreateController.initCreateChat);

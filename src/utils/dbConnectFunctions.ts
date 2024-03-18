@@ -103,12 +103,13 @@ export async function getPrivCompanions (userId: number) {
 			)
 			.execute()
 		
-		const allCompanions = allChats
-			.map((chat) => 
-				chat && chat.users 
-				&& {chatId: chat.participant__junction.chat_id, user: chat.users.nickname}			
-			)
-			.filter(Boolean);
+		const allCompanions: any[] = [];
+		
+		allChats.forEach((chat) => {
+				if (!!chat && chat.users !== null && chat.users.nickname !== null) {
+					allCompanions.push({chatId: chat.participant__junction.chat_id, user: chat.users.nickname})
+				} 
+			})
 		
 		return allCompanions;
 	} catch (error: any) {
@@ -184,7 +185,7 @@ export async function getPreviousMessages (chatId: number) {
 			
 		return chatsHistory;
 	} catch (error: any) {
-		console.error(`Error in getMessages: ${error.message}`);
+		console.error(`Error in getPreviousMessages: ${error.message}`);
 		throw error;
 	}
 }
@@ -209,7 +210,7 @@ export async function messagesInsideByChunk (db: any, chatId: number, findBy: 't
 						
 		return chatsHistory;
 	} catch (error: any) {
-		console.error(`Error in searchMessages: ${error.message}`);
+		console.error(`Error in messagesInsideByChunk: ${error.message}`);
 		throw error;
 	}
 }
@@ -220,26 +221,59 @@ export async function searchMessagesByChunk(
 			findBy: 'text' | 'user', 
 			findAmong: 'groupJoinedChats' | 'privateJoinedChats', 
 			chunk: string
-		) {
-	const isPrivate = findAmong === 'groupJoinedChats' ? false : true
-	
-	const result = await getChats(isPrivate, userId);
-	const chatArray : number[] = result.map(chat => chat.chats.chat_id);
-	
-	const toCompare = findBy === 'text' ? newMessageSchema.message_text : newMessageSchema.user_id
+) {
+	try {				
+		const isPrivate = findAmong === 'groupJoinedChats' ? false : true
+		
+		const result = await getChats(isPrivate, userId);
+		const chatArray : number[] = result.map(chat => chat.chats.chat_id);
+		
+		const toCompare = findBy === 'text' ? newMessageSchema.message_text : newMessageSchema.user_id
 
-	const messages = await db
-		.select()
-		.from(newMessageSchema)
+		const messages = await db
+			.select()
+			.from(newMessageSchema)
+			.where(
+				and(
+					whereIn(newMessageSchema.chat_id, chatArray),
+					like(toCompare, `%${chunk}%`)
+				))
+			.orderBy(desc(newMessageSchema.timestamp))
+			.execute();
+
+		return messages;
+	} catch (error: any) {
+		console.error(`Error in searchMessagesByChunk: ${error.message}`);
+		throw error;
+	}
+}
+
+
+export async function getChatByNickname (userId: number, chunk: string) {
+	try {
+		const companionsArray: {chatId: number, user: string}[] = await getPrivCompanions(userId);
+		const companions = companionsArray.map((companion) => companion.user)
+
+		const db = await connect();
+		const userResult = await db
+		.select({user: newUserSchema.nickname})
+		.from(newUserSchema)
 		.where(
 			and(
-				whereIn(newMessageSchema.chat_id, chatArray),
-				like(toCompare, `%${chunk}%`)
+				whereIn(newUserSchema.nickname, companions),
+				like(newUserSchema.nickname, `%${chunk}%`)
 			))
 		.orderBy(desc(newMessageSchema.timestamp))
 		.execute();
 
-	return messages;
+		const userArray = userResult.map((result) => result.user);
+		const chatResult = companionsArray.filter((companion) => userArray.includes(companion.user))
+		
+		return chatResult;
+	} catch (error: any) {
+		console.error(`Error in getChatByNickname: ${error.message}`);
+		throw error;
+	}
 }
 
 export async function getСonnectTime (chatId: number, userId: number) {
